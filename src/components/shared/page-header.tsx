@@ -90,7 +90,7 @@ export default function PageHeader({ className }: { className?: string }) {
         <div
             data-slot="doc-header"
             className={cn(
-                "w-full py-[calc(var(--spacing-base)/2)] relative flex flex-col items-center gap-base",
+                "w-full py-[calc(var(--spacing-base)/2)] relative flex flex-col items-start gap-base",
                 // "after:content-[''] after:block after:absolute after:h-px after:bg-border after:w-full after:left-0 after:top-[calc(100%-1px)]",
                 "lg:flex-row",
                 "px-gutter",

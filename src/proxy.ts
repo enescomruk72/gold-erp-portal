@@ -1,6 +1,5 @@
+import { auth } from "@/lib/auth";
 import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
-import { getToken } from "next-auth/jwt";
 
 // 1. Korumalı Rotalar (Giriş zorunlu)
 const protectedRoutes = ["/"];
@@ -12,8 +11,9 @@ const authRoutes = ["/auth/login"];
 // 3. Public Rotalar (Herkes erişebilir)
 const publicRoutes = ["/api/auth", "/_next", "/static", "/favicon.ico"];
 
-export async function proxy(request: NextRequest) {
+export default auth((request) => {
     const { pathname } = request.nextUrl;
+    const isAuthenticated = !!request.auth;
 
     if (publicFilesRegex.test(pathname)) {
         return NextResponse.next();
@@ -22,13 +22,6 @@ export async function proxy(request: NextRequest) {
     if (publicRoutes.some((route) => pathname.startsWith(route))) {
         return NextResponse.next();
     }
-
-    const token = await getToken({
-        req: request,
-        secret: process.env.NEXTAUTH_SECRET,
-    });
-
-    const isAuthenticated = !!token;
 
     // Giriş sayfasına gelen kullanıcı
     if (authRoutes.some((route) => pathname.startsWith(route))) {
@@ -53,7 +46,7 @@ export async function proxy(request: NextRequest) {
     }
 
     return NextResponse.next();
-}
+});
 
 // Hangi yollarda çalışacağını belirle (Optimizasyon için önemli)
 export const config = {

@@ -26,8 +26,8 @@ export const authConfig = {
                                 ? JSON.parse(credentials.cari)
                                 : typeof credentials.cari === "object" &&
                                     credentials.cari !== null
-                                  ? credentials.cari
-                                  : { id: "", cariAdi: "" },
+                                    ? credentials.cari
+                                    : { id: "", cariAdi: "" },
                         isActive:
                             typeof credentials.isActive === "string"
                                 ? credentials.isActive === "true"
@@ -37,8 +37,8 @@ export const authConfig = {
                             typeof credentials.roles === "string"
                                 ? JSON.parse(credentials.roles)
                                 : Array.isArray(credentials.roles)
-                                  ? credentials.roles
-                                  : [],
+                                    ? credentials.roles
+                                    : [],
                         accessToken: String(credentials.accessToken || ""),
                         refreshToken: String(credentials.refreshToken || ""),
                         expiresIn:
@@ -134,7 +134,6 @@ export const authConfig = {
     pages: {
         signIn: "/auth/login",
     },
-    redirectProxyUrl: "/auth/login",
     debug: env.isDevelopment,
     secret: env.authSecret,
     trustHost: true,

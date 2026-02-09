@@ -6,8 +6,8 @@ import { z } from "zod";
  */
 const clientEnvSchema = z.object({
     NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
-    NEXT_PUBLIC_BASE_URL: z.string().url().default("http://localhost:5174"),
-    NEXT_PUBLIC_API_URL: z.string().url().default("http://localhost:3001/api/v1"),
+    NEXT_PUBLIC_BASE_URL: z.url().default("http://localhost:5174"),
+    NEXT_PUBLIC_API_URL: z.url().default("http://localhost:3001/api/v1"),
 });
 
 const _clientEnv = clientEnvSchema.safeParse(process.env);
