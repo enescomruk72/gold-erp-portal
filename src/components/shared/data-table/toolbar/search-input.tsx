@@ -90,7 +90,6 @@ export function SearchInput({
             {/* Input */}
             <Input
                 ref={inputRef}
-                isLoading={isLoading}
                 type="search"
                 placeholder={placeholder}
                 value={search.value}

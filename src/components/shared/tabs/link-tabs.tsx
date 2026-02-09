@@ -8,6 +8,13 @@ import { AnimatePresence, motion, Transition } from 'framer-motion';
 import { composeRefs } from "@/lib/compose-refs";
 import Link from 'next/link';
 import { Route } from 'next';
+
+interface HoverIndicatorRect {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+}
 // Animation transition
 const transition: Transition = {
     type: 'tween',
@@ -16,7 +23,7 @@ const transition: Transition = {
 };
 
 // Helper function for hover animation
-const getHoverAnimationProps = (hoveredRect: DOMRect, navRect: DOMRect, navScrollLeft: number) => ({
+const getHoverAnimationProps = (hoveredRect: DOMRect, navRect: DOMRect, navScrollLeft: number): HoverIndicatorRect => ({
     x: hoveredRect.left - navRect.left - 1 + navScrollLeft,
     y: hoveredRect.top - navRect.top - 1,
     width: hoveredRect.width + 2,
@@ -72,21 +79,19 @@ const LinkTabsList = React.forwardRef<HTMLElement, LinkTabsListProps>(
         const { isLoading } = useLinkTabsContext();
         const [buttonRefs, setButtonRefs] = useState<Array<HTMLButtonElement | null>>([]);
         const [hoveredTabIndex, setHoveredTabIndex] = useState<number | null>(null);
+        const [hoverIndicator, setHoverIndicator] = useState<HoverIndicatorRect | null>(null);
+        const [activeIndicator, setActiveIndicator] = useState<{ width: number; x: number } | null>(null);
         const navRef = useRef<HTMLElement>(null);
         const pathname = usePathname();
 
         // Button refs'i güncelle
         useEffect(() => {
-            const buttons = navRef.current?.querySelectorAll('button');
+            const buttons = navRef.current?.querySelectorAll<HTMLButtonElement>('button');
             if (buttons) {
+                // eslint-disable-next-line
                 setButtonRefs(Array.from(buttons));
             }
         }, [children]);
-
-        const navRect = navRef.current?.getBoundingClientRect();
-        const navScrollLeft = navRef.current?.scrollLeft ?? 0;
-
-        const hoveredRect = buttonRefs[hoveredTabIndex ?? -1]?.getBoundingClientRect();
 
         // Active tab detection - daha basit yaklaşım
         const activeButtonIndex = buttonRefs.findIndex((button) => {
@@ -95,7 +100,52 @@ const LinkTabsList = React.forwardRef<HTMLElement, LinkTabsListProps>(
             return href && pathname === href; // Exact match kullan
         });
 
-        const selectedRect = buttonRefs[activeButtonIndex]?.getBoundingClientRect();
+        // Hover indicator geometry (computed from DOM in effect)
+        useEffect(() => {
+            if (hoveredTabIndex == null || !navRef.current) {
+                // eslint-disable-next-line
+                setHoverIndicator(null);
+                return;
+            }
+
+            const hoveredButton = buttonRefs[hoveredTabIndex];
+            if (!hoveredButton) {
+                setHoverIndicator(null);
+                return;
+            }
+
+            const navElement = navRef.current;
+            const navRect = navElement.getBoundingClientRect();
+            const navScrollLeft = navElement.scrollLeft ?? 0;
+            const hoveredRect = hoveredButton.getBoundingClientRect();
+
+            setHoverIndicator(getHoverAnimationProps(hoveredRect, navRect, navScrollLeft));
+        }, [hoveredTabIndex, buttonRefs]);
+
+        // Active tab indicator geometry (computed from DOM in effect)
+        useEffect(() => {
+            if (!navRef.current || activeButtonIndex === -1) {
+                // eslint-disable-next-line
+                setActiveIndicator(null);
+                return;
+            }
+
+            const activeButton = buttonRefs[activeButtonIndex];
+            if (!activeButton) {
+                setActiveIndicator(null);
+                return;
+            }
+
+            const navElement = navRef.current;
+            const navRect = navElement.getBoundingClientRect();
+            const navScrollLeft = navElement.scrollLeft ?? 0;
+            const selectedRect = activeButton.getBoundingClientRect();
+
+            setActiveIndicator({
+                width: selectedRect.width + 2,
+                x: selectedRect.left - navRect.left - 1 + navScrollLeft,
+            });
+        }, [activeButtonIndex, buttonRefs]);
 
         if (isLoading) {
             return skeleton ? (
@@ -138,15 +188,15 @@ const LinkTabsList = React.forwardRef<HTMLElement, LinkTabsListProps>(
 
                 {/* Hover Animation */}
                 <AnimatePresence>
-                    {hoveredRect && navRect && (
+                    {hoverIndicator && (
                         <motion.div
                             key="hover"
                             className={cn(
                                 'absolute z-20 top-0 left-0 rounded-md bg-foreground/5',
                             )}
-                            initial={{ ...getHoverAnimationProps(hoveredRect, navRect, navScrollLeft), opacity: 0 }}
-                            animate={{ ...getHoverAnimationProps(hoveredRect, navRect, navScrollLeft), opacity: 1 }}
-                            exit={{ ...getHoverAnimationProps(hoveredRect, navRect, navScrollLeft), opacity: 0 }}
+                            initial={{ ...hoverIndicator, opacity: 0 }}
+                            animate={{ ...hoverIndicator, opacity: 1 }}
+                            exit={{ ...hoverIndicator, opacity: 0 }}
                             transition={transition}
                         />
                     )}
@@ -154,15 +204,15 @@ const LinkTabsList = React.forwardRef<HTMLElement, LinkTabsListProps>(
 
                 {/* Active Tab Indicator */}
                 <AnimatePresence>
-                    {selectedRect && navRect && activeButtonIndex !== -1 && (
+                    {activeIndicator && activeButtonIndex !== -1 && (
                         <motion.div
                             className={cn(
                                 'absolute z-20 bottom-0 left-0 h-[4px] rounded-t-2xl bg-primary',
                             )}
                             initial={false}
                             animate={{
-                                width: selectedRect.width + 2,
-                                x: `calc(${selectedRect.left - navRect.left - 1 + navScrollLeft}px)`,
+                                width: activeIndicator.width,
+                                x: `calc(${activeIndicator.x}px)`,
                                 opacity: 1
                             }}
                             transition={transition}
@@ -177,7 +227,7 @@ LinkTabsList.displayName = "LinkTabsList";
 
 // LinkTabs Trigger bileşeni
 interface LinkTabsTriggerProps extends React.HTMLAttributes<HTMLButtonElement> {
-    href: string;
+    href: Route;
     children: React.ReactNode;
     exact?: boolean;
     index?: number;
@@ -213,7 +263,7 @@ const LinkTabsTrigger = React.forwardRef<HTMLButtonElement, LinkTabsTriggerProps
             if (isActive) return; // Zaten aktifse tıklamayı engelle
 
             try {
-                router.push(href as Route);
+                router.push(href);
             } catch (error) {
                 console.error('Navigation error:', error);
             }
@@ -221,7 +271,7 @@ const LinkTabsTrigger = React.forwardRef<HTMLButtonElement, LinkTabsTriggerProps
 
         return (
             <Link
-                href={href as Route}
+                href={href}
 
             >
                 <button

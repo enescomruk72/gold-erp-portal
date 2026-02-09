@@ -235,24 +235,6 @@ export const usePageHeaderStore = create<PageHeaderStore>()(
         {
             name: 'PageHeaderStore',
             enabled: process.env.NODE_ENV === 'development',
-            // Serialize only primitive values, skip ReactNode to prevent errors
-            serialize: {
-                replacer: (_key: string, value: unknown) => {
-                    // Skip ReactNode serialization (icon, customContent)
-                    if (
-                        value &&
-                        typeof value === 'object' &&
-                        '$$typeof' in value
-                    ) {
-                        return '[ReactNode]';
-                    }
-                    // Skip functions
-                    if (typeof value === 'function') {
-                        return '[Function]';
-                    }
-                    return value;
-                },
-            },
         }
     )
 );

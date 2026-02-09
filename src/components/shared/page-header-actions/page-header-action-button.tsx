@@ -11,6 +11,7 @@ import Link from 'next/link';
 import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { PageHeaderAction } from '@/stores/page-header.store';
+import type { Route } from 'next';
 
 export interface PageHeaderActionButtonProps {
     action: PageHeaderAction;
@@ -20,8 +21,7 @@ export const PageHeaderActionButton = React.memo<PageHeaderActionButtonProps>(
     ({ action }) => {
         if (action.href) {
             return (
-                // @ts-expect-error - Dynamic route type
-                <Link key={action.id} href={action.href}>
+                <Link key={action.id} href={action.href as Route}>
                     <Button
                         variant={action.variant || 'default'}
                         disabled={action.disabled || action.loading}
