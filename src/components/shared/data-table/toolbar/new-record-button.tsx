@@ -71,7 +71,7 @@ export function NewRecordButton({
         'gap-2 rounded-full h-8 transition-all duration-300',
         compact ? 'w-8' : 'px-3',
         'bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground',
-        // 'bg-[#0b57d0] text-white hover:bg-[#0b57d0]/90 hover:text-white',
+        'bg-[#0b57d0] text-white hover:bg-[#0b57d0]/90 hover:text-white',
         triggerClassName
     );
 

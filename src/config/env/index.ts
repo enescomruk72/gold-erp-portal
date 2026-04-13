@@ -8,15 +8,18 @@ import { clientEnv } from "./client.env.config";
 let serverEnv: (typeof import("./server.env.config"))["serverEnv"] | undefined;
 
 try {
-    if (typeof window === "undefined") {
+    if (typeof window === 'undefined') {
         // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const serverEnvModule = require("./server.env.config");
+        const serverEnvModule = require('./server.env.config');
         serverEnv = serverEnvModule.serverEnv;
     }
 } catch (error) {
-    if (typeof window !== "undefined") {
-        // Client-side'da normal
+    // Client-side'da import edilirse hata fırlatılır (server.env.config.ts'de kontrol var)
+    // Bu durumda serverEnv undefined kalır
+    if (typeof window !== 'undefined') {
+        // Client-side'da bu normal, sessizce devam et
     } else {
+        // Server-side'da hata varsa fırlat
         throw error;
     }
 }

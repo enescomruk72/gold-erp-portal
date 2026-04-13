@@ -56,8 +56,8 @@ export function ProductGrid({ onProductDetailClick }: ProductGridProps) {
     const grid = useDataGrid<IProductDTO>({
         gridId: "products",
         columns: productColumns,
-        apiEndpoint: "/v1/b2b/products",
-        useProxy: true,
+        apiEndpoint: "/b2b/products",
+        useProxy: false,
         statePrefix: "products",
         buildCustomParams: buildProductFilters,
         config: {
@@ -85,10 +85,9 @@ export function ProductGrid({ onProductDetailClick }: ProductGridProps) {
             <DataGrid
                 grid={grid}
                 className="2xl:grid-cols-5 3xl:grid-cols-6"
-                renderCard={(product, index) => (
+                renderCard={(product) => (
                     <ProductCard
                         product={product}
-                        index={index}
                         onDetailClick={onProductDetailClick}
                     />
                 )}

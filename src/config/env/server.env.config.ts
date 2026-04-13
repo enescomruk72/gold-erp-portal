@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { formatZodError } from "@/lib/utils";
 
 /**
  * Server-side only environment variables
@@ -7,9 +8,7 @@ import { z } from "zod";
 const serverEnvSchema = z.object({
     APP_NAME: z.string().default("gold-erp-portal"),
     PORT: z.coerce.number().default(5174),
-    NEXTAUTH_SECRET: z
-        .string()
-        .min(32, { message: "NEXTAUTH_SECRET must be at least 32 characters long" }),
+    NEXTAUTH_SECRET: z.string().min(32, { message: "NEXTAUTH_SECRET must be at least 32 characters long" }),
     NEXTAUTH_URL: z.string().url().default("http://localhost:5174"),
 });
 
@@ -24,7 +23,7 @@ const _serverEnv = serverEnvSchema.safeParse(process.env);
 if (!_serverEnv.success) {
     console.error(
         "Invalid server environment variables",
-        JSON.stringify(_serverEnv.error.format(), null, 2)
+        JSON.stringify(formatZodError(_serverEnv.error), null, 2)
     );
     process.exit(1);
 }

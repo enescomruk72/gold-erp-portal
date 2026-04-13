@@ -18,30 +18,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
 import type { IProductDTO } from "@/features/products/types";
-import {
-    getHasFromUrunAdi,
-    getIscilikFromProductId,
-} from "@/features/products/lib/milyem-utils";
+import { useGetProduct } from "@/features/products/api/use-get-product";
 import { useCartStore } from "@/features/cart";
-import { MOCK_PRODUCT_IMAGE_URLS } from "@/features/products/lib/mock-product-images";
 import { cn } from "@/lib/utils";
 import { ProductImageGallery } from "./ProductImageGallery";
-
-/** Miktar birimleri */
-const MIKTAR_BIRIMLERI = [
-    { value: "ADET", label: "Adet" },
-    { value: "GRAM", label: "Gram" },
-    { value: "KG", label: "Kilogram" },
-    { value: "METRE", label: "Metre" },
-] as const;
 
 interface ProductDetailModalProps {
     product: IProductDTO | null;
@@ -49,34 +30,16 @@ interface ProductDetailModalProps {
     onOpenChange: (open: boolean) => void;
 }
 
-function formatPrice(price?: number) {
-    if (!price && price !== 0) return "—";
-    return new Intl.NumberFormat("tr-TR", {
-        style: "currency",
-        currency: "TRY",
-    }).format(price);
-}
-
-/** Thumbnails için minimum görsel sayısı */
-const MIN_THUMBNAIL_COUNT = 3;
-
-/** Ürün görsel URL'lerini döner: ilk görsel mock, sonra product.images + ek mock */
+/** Ürün görsel URL'lerini backend sırasına göre döner */
 function getProductImageUrls(product: IProductDTO): string[] {
-    const baseIndex =
-        Math.abs(
-            product.id.split("").reduce((a, c) => (a + c.charCodeAt(0)) | 0, 0)
-        ) % MOCK_PRODUCT_IMAGE_URLS.length;
-    const mockUrls = MOCK_PRODUCT_IMAGE_URLS;
-    const firstMock = mockUrls[baseIndex];
-    const fromProduct = product.images?.length
-        ? product.images.map((img) => img.url)
-        : [];
-    const combined = [firstMock, ...fromProduct];
-    const needed = Math.max(MIN_THUMBNAIL_COUNT - combined.length, 0);
-    const extras = Array.from({ length: needed }, (_, i) =>
-        mockUrls[(baseIndex + 1 + i) % mockUrls.length]
-    );
-    return [...combined, ...extras];
+    return (product.images ?? [])
+        .filter((image) => image.url)
+        .sort((a, b) => {
+            if (a.varsayilanMi && !b.varsayilanMi) return -1;
+            if (!a.varsayilanMi && b.varsayilanMi) return 1;
+            return a.siraNo - b.siraNo;
+        })
+        .map((image) => image.url as string);
 }
 
 export function ProductDetailModal({
@@ -84,41 +47,58 @@ export function ProductDetailModal({
     open,
     onOpenChange,
 }: ProductDetailModalProps) {
+    const productDetailQuery = useGetProduct(product?.id ?? null, open);
+    const modalProduct = (productDetailQuery.data?.data ?? null) as IProductDTO | null;
     const { addItem, isInCart, getItemQuantity } = useCartStore();
     const [quantity, setQuantity] = useState(1);
     const [isAdding, setIsAdding] = useState(false);
-    const [indirimOrani, setIndirimOrani] = useState(0);
-    const [ekMaliyet, setEkMaliyet] = useState(0);
-    const [miktarBirimi, setMiktarBirimi] = useState<string>(
-        () => product?.birim?.birimKodu ?? "ADET"
-    );
 
     useEffect(() => {
         setQuantity(1);
-        setIndirimOrani(0);
-        setEkMaliyet(0);
-        setMiktarBirimi(product?.birim?.birimKodu ?? "ADET");
-    }, [product?.id, product?.birim?.birimKodu]);
+    }, [modalProduct?.id]);
 
-    const birimFiyat = product?.satisFiyati ?? 0;
-    const ara = quantity * birimFiyat;
-    const indirim = ara * (indirimOrani / 100);
-    const araToplam = Math.round(ara * 100) / 100;
-    const indirimTutari = Math.round(indirim * 100) / 100;
-    const toplam = Math.round((ara - indirim + ekMaliyet) * 100) / 100;
+    const birimFiyat = modalProduct?.satisFiyati ?? 0;
 
-    const inCart = isInCart(product?.id ?? "");
-    const cartQuantity = getItemQuantity(product?.id ?? "");
-    const imageUrls = product ? getProductImageUrls(product) : [];
+    const inCart = isInCart(modalProduct?.id ?? "");
+    const cartQuantity = getItemQuantity(modalProduct?.id ?? "");
+    const imageUrls = modalProduct ? getProductImageUrls(modalProduct) : [];
+    const toplamIscilikMilyem =
+        (modalProduct?.iscilikMilyem ?? 0) + (modalProduct?.karMilyem ?? 0);
+    const isIscilikVisible =
+        modalProduct?.iscilikMilyem != null || modalProduct?.karMilyem != null;
+    const ortalamaAgirlik = modalProduct?.ortalamaAgirlik ?? 0;
+    const toplamOrtalamaAgirlik = Math.round(quantity * ortalamaAgirlik * 1000) / 1000;
 
     if (!product) return null;
 
+    if (!modalProduct) {
+        return (
+            <Dialog open={open} onOpenChange={onOpenChange}>
+                <DialogContent
+                    showCloseButton={false}
+                    className="max-h-[95dvh] w-[95vw] max-w-[calc(100%-2rem)] border-none bg-muted p-6 sm:max-w-2xl"
+                >
+                    <p className="text-sm text-muted-foreground">
+                        Ürün detayları yükleniyor...
+                    </p>
+                    <DialogClose asChild>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="absolute top-4 right-4 z-10 shrink-0 rounded-full"
+                        >
+                            <XIcon className="size-4" />
+                        </Button>
+                    </DialogClose>
+                </DialogContent>
+            </Dialog>
+        );
+    }
+
     const handleAddToCart = async () => {
-        const birimFiyatHesaplanan =
-            quantity > 0 ? toplam / quantity : birimFiyat;
         setIsAdding(true);
         try {
-            addItem(product, quantity, birimFiyatHesaplanan);
+            addItem(modalProduct, quantity, birimFiyat);
             await new Promise((r) => setTimeout(r, 300));
         } finally {
             setIsAdding(false);
@@ -136,10 +116,10 @@ export function ProductDetailModal({
                     <div className="relative flex shrink-0 flex-col p-base pb-0 lg:col-span-1 lg:min-h-0 lg:flex-1 lg:pb-base lg:pr-0">
                         <ProductImageGallery
                             imageUrls={imageUrls}
-                            alt={product.urunAdi}
+                            alt={modalProduct.urunAdi}
                             className="h-full"
                         />
-                        {!product.aktifMi && (
+                        {!modalProduct.aktifMi && (
                             <Badge
                                 variant="destructive"
                                 className="absolute right-4 top-4 z-10"
@@ -155,47 +135,57 @@ export function ProductDetailModal({
                             <div className="flex shrink-0 flex-row items-start justify-between gap-3 p-4 pb-2 lg:px-6">
                                 <div className="min-w-0 flex-1">
                                     <h2 className="line-clamp-2 text-lg font-bold leading-tight sm:text-xl lg:text-2xl">
-                                        {product.urunAdi}
+                                        {modalProduct.urunAdi}
                                     </h2>
+                                    <h3 className="text-sm tabular-nums font-semibold">
+                                        MODEL #{modalProduct.urunModelKodu}
+                                    </h3>
                                     <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground sm:text-sm">
-                                        {product.urunKodu}
+                                        {modalProduct.urunKodu}
                                     </p>
                                     <div className="mt-2 flex flex-wrap items-center gap-x-3 text-xs">
-                                        <span className="font-medium text-amber-700 dark:text-amber-400">
-                                            Has {getHasFromUrunAdi(product.urunAdi)}‰
-                                        </span>
+                                        {isIscilikVisible && (
+                                            <span className="text-muted-foreground">
+                                                İşçilik {toplamIscilikMilyem}‰
+                                            </span>
+                                        )}
                                         <span className="text-muted-foreground">·</span>
                                         <span className="text-muted-foreground">
-                                            İşçilik {getIscilikFromProductId(product.id)}‰
+                                            Ortalama Ağırlık {ortalamaAgirlik} gr
                                         </span>
                                     </div>
                                 </div>
                             </div>
 
                             <div className="min-h-0 flex-1 space-y-4 overflow-x-hidden overflow-y-auto p-4 pt-0 sm:space-y-5 lg:p-6">
-                                {product.aciklama && (
+                                {productDetailQuery.isPending && (
+                                    <p className="text-sm text-muted-foreground">
+                                        Ürün detayları yükleniyor...
+                                    </p>
+                                )}
+                                {modalProduct.aciklama && (
                                     <p className="line-clamp-3 text-sm text-muted-foreground">
-                                        {product.aciklama}
+                                        {modalProduct.aciklama}
                                     </p>
                                 )}
 
                                 <div className="flex flex-wrap items-center gap-2">
-                                    {product.kategori && (
+                                    {modalProduct.kategori && (
                                         <Badge
                                             variant="outline"
                                             className="gap-1 text-xs"
                                         >
                                             <Tag className="size-3" />
-                                            {product.kategori.kategoriAdi}
+                                            {modalProduct.kategori.kategoriAdi}
                                         </Badge>
                                     )}
-                                    {product.marka && (
+                                    {modalProduct.marka && (
                                         <Badge
                                             variant="outline"
                                             className="gap-1 text-xs"
                                         >
                                             <Package className="size-3" />
-                                            {product.marka.markaAdi}
+                                            {modalProduct.marka.markaAdi}
                                         </Badge>
                                     )}
                                     {inCart && (
@@ -208,12 +198,7 @@ export function ProductDetailModal({
                                     )}
                                 </div>
 
-                                <p className="text-2xl font-bold text-primary lg:text-3xl">
-                                    {formatPrice(birimFiyat)}
-                                    <span className="ml-1 text-sm font-normal text-muted-foreground">
-                                        / {product.birim?.birimAdi ?? "Adet"}
-                                    </span>
-                                </p>
+
 
                                 {/* Miktar + Miktar birimi */}
                                 <div className="flex items-end gap-3">
@@ -266,59 +251,59 @@ export function ProductDetailModal({
                                         <Label className="mb-1.5 block text-xs">
                                             Miktar birimi
                                         </Label>
-                                        <Select
-                                            value={miktarBirimi}
-                                            onValueChange={setMiktarBirimi}
-                                        >
-                                            <SelectTrigger className="h-9">
-                                                <SelectValue placeholder="Birim seçin" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {MIKTAR_BIRIMLERI.map((b) => (
-                                                    <SelectItem
-                                                        key={b.value}
-                                                        value={b.value}
-                                                    >
-                                                        {b.label}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
+                                        <div className="flex h-9 items-center rounded-md border bg-background px-3 text-sm font-medium">
+                                            ADET
+                                        </div>
                                     </div>
                                 </div>
 
-                                {/* Özet */}
+                                {/* Ürün bilgileri */}
                                 <div className="space-y-2 rounded-lg bg-muted/60 p-4 text-sm">
                                     <div className="flex justify-between">
                                         <span className="text-muted-foreground">
-                                            Ara Toplam
+                                            Toplam Ortalama Ağırlık
                                         </span>
                                         <span className="tabular-nums">
-                                            {formatPrice(araToplam)}
+                                            {toplamOrtalamaAgirlik} gr
                                         </span>
                                     </div>
                                     <div className="flex justify-between">
                                         <span className="text-muted-foreground">
-                                            İndirim
+                                            İşçilik (Toplam)
                                         </span>
-                                        <span className="tabular-nums text-destructive">
-                                            -{formatPrice(indirimTutari)}
+                                        <span className="tabular-nums">
+                                            {isIscilikVisible
+                                                ? `${toplamIscilikMilyem}‰`
+                                                : "—"}
                                         </span>
                                     </div>
                                     <div className="flex justify-between">
                                         <span className="text-muted-foreground">
-                                            Ek Maliyet
+                                            Materyal
                                         </span>
                                         <span className="tabular-nums">
-                                            +{formatPrice(ekMaliyet)}
+                                            {modalProduct.materyal?.materyalAdi ?? "—"}
+                                        </span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-muted-foreground">
+                                            Has Milyem
+                                        </span>
+                                        <span className="tabular-nums">
+                                            {modalProduct.materyal?.milyemKatsayisi != null
+                                                ? `${modalProduct.materyal.milyemKatsayisi}‰`
+                                                : "—"}
                                         </span>
                                     </div>
                                     <div className="flex justify-between border-t border-border pt-2 font-semibold">
-                                        <span>Toplam</span>
+                                        <span>Kategori</span>
                                         <span className="tabular-nums text-foreground">
-                                            {formatPrice(toplam)}
+                                            {modalProduct.kategori?.kategoriAdi ?? "—"}
                                         </span>
                                     </div>
+                                    <p className="pt-1 text-[11px] text-muted-foreground">
+                                        Uyarı: Ortalama ağırlık değeri ürünün net ağırlığını ifade etmez.
+                                    </p>
                                 </div>
 
                                 {/* Sepete ekle – desktop */}
@@ -332,7 +317,7 @@ export function ProductDetailModal({
                                         size="lg"
                                         onClick={handleAddToCart}
                                         disabled={
-                                            !product.aktifMi ||
+                                            !modalProduct.aktifMi ||
                                             quantity <= 0 ||
                                             isAdding
                                         }
@@ -358,7 +343,7 @@ export function ProductDetailModal({
                                     size="lg"
                                     onClick={handleAddToCart}
                                     disabled={
-                                        !product.aktifMi ||
+                                        !modalProduct.aktifMi ||
                                         quantity <= 0 ||
                                         isAdding
                                     }

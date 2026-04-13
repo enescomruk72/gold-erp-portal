@@ -6,28 +6,27 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import type { IProductDTO } from "@/features/products/types";
-import { getMockProductImageUrl } from "@/features/products/lib/mock-product-images";
-import {
-    getHasFromUrunAdi,
-    getIscilikFromProductId,
-} from "@/features/products/lib/milyem-utils";
 import { useCartStore } from "@/features/cart";
 import { cn } from "@/lib/utils";
 
 interface ProductCardProps {
     product: IProductDTO;
-    /** Liste indeksi - mock görsel seçimi için (product.images yoksa) */
-    index?: number;
     onDetailClick?: (product: IProductDTO) => void;
 }
 
-function getCardImageUrls(_product: IProductDTO, index: number = 0): string[] {
-    return [getMockProductImageUrl(index)];
+function getCardImageUrls(product: IProductDTO): string[] {
+    return (product.images ?? [])
+        .filter((image) => image.url)
+        .sort((a, b) => {
+            if (a.varsayilanMi && !b.varsayilanMi) return -1;
+            if (!a.varsayilanMi && b.varsayilanMi) return 1;
+            return a.siraNo - b.siraNo;
+        })
+        .map((image) => image.url as string);
 }
 
 export function ProductCard({
     product,
-    index = 0,
     onDetailClick,
 }: ProductCardProps) {
     const [activeImageIndex, setActiveImageIndex] = useState(0);
@@ -36,7 +35,7 @@ export function ProductCard({
     const getItemQuantity = useCartStore((s) => s.getItemQuantity);
     const touchStartX = useRef<number | null>(null);
 
-    const imageUrls = getCardImageUrls(product, index);
+    const imageUrls = getCardImageUrls(product);
     const imageCount = imageUrls.length;
     const hasMultipleImages = imageCount > 1;
 
@@ -75,13 +74,6 @@ export function ProductCard({
         [hasMultipleImages, imageCount]
     );
 
-    const formatPrice = (price?: number) => {
-        if (price == null) return "Fiyat belirtilmemiş";
-        return new Intl.NumberFormat("tr-TR", {
-            style: "decimal",
-        }).format(price);
-    };
-
     const primaryImageUrl = imageUrls[activeImageIndex] || imageUrls[0];
 
     const handleQuickAdd = (e: React.MouseEvent) => {
@@ -92,8 +84,10 @@ export function ProductCard({
     const inCart = isInCart(product.id);
     const cartQty = getItemQuantity(product.id);
 
-    const hasMilyem = getHasFromUrunAdi(product.urunAdi);
-    const iscilikMilyem = getIscilikFromProductId(product.id);
+    const toplamIscilikMilyem =
+        (product.iscilikMilyem ?? 0) + (product.karMilyem ?? 0);
+    const isIscilikVisible =
+        product.iscilikMilyem != null || product.karMilyem != null;
 
     return (
         <Card
@@ -110,13 +104,22 @@ export function ProductCard({
             >
                 <ShoppingCart className="size-4" />
             </Button>
-            {inCart && (
-                <Badge
-                    variant="secondary"
-                    className="absolute left-2 top-2 z-10 text-xs"
-                >
-                    Sepette · {cartQty}
-                </Badge>
+            {(product.marka?.markaAdi || inCart) && (
+                <div className="absolute left-2 top-2 z-10 flex max-w-[calc(100%-4rem)] flex-col items-start gap-1">
+                    {product.marka?.markaAdi ? (
+                        <Badge variant="secondary" className="text-xs shadow-sm">
+                            {product.marka.markaAdi}
+                        </Badge>
+                    ) : null}
+                    {inCart ? (
+                        <Badge
+                            variant="outline"
+                            className="border-primary/30 bg-background/95 text-xs shadow-sm backdrop-blur-sm"
+                        >
+                            Sepette · {cartQty}
+                        </Badge>
+                    ) : null}
+                </div>
             )}
             {!product.aktifMi && (
                 <Badge
@@ -173,33 +176,44 @@ export function ProductCard({
                         <h3 className="line-clamp-2 font-semibold leading-tight text-foreground">
                             {product.urunAdi}
                         </h3>
+                        {product.urunModelKodu ? (
+                            <p className="line-clamp-1 text-xs font-medium tabular-nums text-muted-foreground">
+                                MODEL {product.urunModelKodu}
+                            </p>
+                        ) : null}
                         <p className="line-clamp-1 text-xs text-muted-foreground">
                             {product.urunKodu}
                         </p>
-                        {product.marka?.markaAdi && (
-                            <span className="inline-block rounded-full border border-border bg-muted/50 px-2.5 py-0.5 text-xs font-medium">
-                                {product.marka.markaAdi}
-                            </span>
-                        )}
                     </div>
 
-                    {/* Alt: has maliyet, fiyat, kategori */}
+                    {/* Alt: mantıksal ürün bilgileri */}
                     <div className="mt-2 flex flex-col gap-0.5 md:mt-0 md:gap-1.5 md:pt-2">
-                        <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs">
-                            <span className="font-medium text-amber-700 dark:text-amber-400">
-                                Has {hasMilyem}‰
-                            </span>
-                            <span className="text-muted-foreground">·</span>
-                            <span className="text-muted-foreground">
-                                İşçilik {iscilikMilyem}‰
-                            </span>
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 text-xs">
+                            {isIscilikVisible ? (
+                                <span className="text-muted-foreground">
+                                    İşçilik {toplamIscilikMilyem}‰
+                                </span>
+                            ) : null}
+                            {product.materyal?.milyemKatsayisi != null ? (
+                                <span className="text-muted-foreground">
+                                    Has {product.materyal.milyemKatsayisi}‰
+                                </span>
+                            ) : null}
                         </div>
-                        <p className="text-base font-bold text-primary md:text-lg">
-                            {formatPrice(product.satisFiyati)}{" "}
-                            <span className="text-xs font-normal text-muted-foreground">
-                                TL
-                            </span>
-                        </p>
+                        <div className="flex flex-wrap gap-1.5">
+                            <Badge variant="outline" className="text-[11px] font-normal tabular-nums">
+                                Ort. {product.ortalamaAgirlik ?? 0}
+                            </Badge>
+                            {product.materyal?.materyalAdi ? (
+                                <Badge variant="outline" className="max-w-full truncate text-[11px] font-normal">
+                                    {product.materyal.materyalAdi}
+                                </Badge>
+                            ) : null}
+
+                            <Badge variant="outline" className="max-w-full truncate text-[11px] font-normal">
+                                {(product.materyal?.milyemKatsayisi ?? 0) * 1000}‰ Milyem
+                            </Badge>
+                        </div>
                         {product.kategori?.kategoriAdi && (
                             <p className="line-clamp-1 text-[11px] text-muted-foreground">
                                 {product.kategori.kategoriAdi}

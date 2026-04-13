@@ -31,11 +31,17 @@ export interface ExportSelectedProps<TData> {
     /** TanStack Table instance */
     table: Table<TData>;
 
+    /** All selected row IDs across all pages (server-side pagination). Overrides table.getSelectedRowModel() count. */
+    allSelectedIds?: string[];
+
     /** Base filename for exported files */
     filename?: string;
 
     /** Called when export is triggered. If provided, parent handles export; otherwise built-in CSV/JSON is used. */
     onExport?: (rows: TData[], format: ExportFormat) => void | Promise<void>;
+
+    /** Called when allSelectedIds is provided. Receives all selected IDs and format. Takes precedence over onExport. */
+    onExportByIds?: (ids: string[], format: ExportFormat) => void | Promise<void>;
 
     /** Custom className */
     className?: string;
@@ -74,8 +80,10 @@ export interface ExportSelectedProps<TData> {
  */
 export function ExportSelected<TData>({
     table,
+    allSelectedIds,
     filename = 'export',
     onExport,
+    onExportByIds,
     className,
     compact = false,
     label = 'Seçilenleri dışa aktar',
@@ -85,18 +93,20 @@ export function ExportSelected<TData>({
     formats = ['csv', 'json'],
 }: ExportSelectedProps<TData>) {
     const selectedRows = table.getSelectedRowModel().rows;
-    const hasSelection = selectedRows.length > 0;
+    const count = allSelectedIds?.length ?? selectedRows.length;
+    const hasSelection = count > 0;
     const rows = React.useMemo(
         () => selectedRows.map((r) => r.original),
         [selectedRows]
     );
-    const count = selectedRows.length;
 
     const handleExport = React.useCallback(
         (format: ExportFormat) => {
-            if (rows.length === 0) return;
+            if (!hasSelection) return;
 
-            if (onExport) {
+            if (allSelectedIds && onExportByIds) {
+                void Promise.resolve(onExportByIds(allSelectedIds, format));
+            } else if (onExport) {
                 void Promise.resolve(onExport(rows, format));
             } else {
                 const baseFilename = `${filename}_${new Date().toISOString().slice(0, 10)}`;
@@ -108,7 +118,7 @@ export function ExportSelected<TData>({
                 }
             }
         },
-        [rows, filename, onExport]
+        [allSelectedIds, onExportByIds, rows, filename, onExport, hasSelection]
     );
 
     return (

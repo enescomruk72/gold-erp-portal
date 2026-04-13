@@ -45,7 +45,7 @@ export function useGetBrands() {
 }
 
 export function useGetMateryaller() {
-    const query = useApiQuery<MateryalOption[]>("/v1/b2b/materyaller", {
+    const query = useApiQuery<MateryalOption[]>("/v1/b2b/materials", {
         queryKey: ["b2b", "materyaller"],
         apiOptions: {
             params: { aktif: true },

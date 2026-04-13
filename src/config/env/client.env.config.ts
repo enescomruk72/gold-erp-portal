@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { formatZodError } from "@/lib/utils";
 
 /**
  * Client-side environment variables (NEXT_PUBLIC_* prefix)
@@ -13,7 +14,7 @@ const clientEnvSchema = z.object({
 const _clientEnv = clientEnvSchema.safeParse(process.env);
 
 if (!_clientEnv.success) {
-    console.error("Invalid client environment variables", JSON.stringify(_clientEnv.error.format(), null, 2));
+    console.error("Invalid client environment variables", JSON.stringify(formatZodError(_clientEnv.error), null, 2));
     if (typeof process !== "undefined" && process.exit) {
         process.exit(1);
     }

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, ImageOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
     Carousel,
@@ -26,7 +26,7 @@ export function ProductImageGallery({
 }: ProductImageGalleryProps) {
     const [api, setApi] = useState<CarouselApi | null>(null);
     const [activeIndex, setActiveIndex] = useState(0);
-    const urls = imageUrls.length > 0 ? imageUrls : ["/test-product-images/001.png"];
+    const urls = imageUrls;
 
     const scrollTo = useCallback(
         (index: number) => {
@@ -45,6 +45,23 @@ export function ProductImageGallery({
         };
     }, [api]);
 
+    if (urls.length === 0) {
+        return (
+            <div
+                className={cn(
+                    "flex h-full min-h-0 items-center justify-center overflow-hidden rounded-lg bg-card",
+                    "min-h-[200px] max-h-[45vh] lg:min-h-[280px] lg:max-h-none lg:rounded-r-2xl",
+                    className
+                )}
+            >
+                <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                    <ImageOff className="h-10 w-10" />
+                    <span className="text-sm">Gorsel bulunamadi</span>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div
             className={cn(
@@ -60,7 +77,7 @@ export function ProductImageGallery({
             >
                 <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2 overflow-hidden sm:gap-3">
                     <div className="relative flex min-h-[180px] min-w-0 flex-1 overflow-hidden rounded-lg sm:min-h-[220px] lg:min-h-[240px] lg:rounded-r-2xl">
-                        <CarouselContent className="ml-0 h-full w-full min-h-0 rounded-lg">
+                        <CarouselContent baseClassName="flex-1!" className="ml-0 h-full w-full min-h-0 rounded-lg">
                             {urls.map((url, i) => (
                                 <CarouselItem
                                     key={i}

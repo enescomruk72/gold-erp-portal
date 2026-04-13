@@ -30,8 +30,14 @@ export interface DeleteSelectedProps<TData> {
     /** TanStack Table instance */
     table: Table<TData>;
 
+    /** All selected row IDs across all pages (server-side pagination). Overrides table.getSelectedRowModel() count. */
+    allSelectedIds?: string[];
+
     /** Called when user confirms delete. Receives selected row data. Parent should: call API, clear selection, refetch. */
-    onDelete: (rows: TData[]) => void | Promise<void>;
+    onDelete?: (rows: TData[]) => void | Promise<void>;
+
+    /** Called when allSelectedIds is provided. Receives all selected IDs across pages. Takes precedence over onDelete. */
+    onDeleteByIds?: (ids: string[]) => void | Promise<void>;
 
     /** Optional: called after successful delete (e.g. to clear selection). If onDelete is async, called after it resolves. */
     onDeleted?: () => void;
@@ -80,7 +86,9 @@ export interface DeleteSelectedProps<TData> {
  */
 export function DeleteSelected<TData>({
     table,
+    allSelectedIds,
     onDelete,
+    onDeleteByIds,
     onDeleted,
     className,
     compact = false,
@@ -95,8 +103,8 @@ export function DeleteSelected<TData>({
     const [isDeleting, setIsDeleting] = React.useState(false);
 
     const selectedRows = table.getSelectedRowModel().rows;
-    const hasSelection = selectedRows.length > 0;
-    const count = selectedRows.length;
+    const count = allSelectedIds?.length ?? selectedRows.length;
+    const hasSelection = count > 0;
     const rows = React.useMemo(
         () => selectedRows.map((r) => r.original),
         [selectedRows]
@@ -108,17 +116,21 @@ export function DeleteSelected<TData>({
             : `${count} öğe kalıcı olarak silinecektir. Bu işlem geri alınamaz.`;
 
     const handleConfirm = React.useCallback(async () => {
-        if (rows.length === 0) return;
+        if (!hasSelection || isDeleting) return;
 
         setIsDeleting(true);
         try {
-            await Promise.resolve(onDelete(rows));
+            if (allSelectedIds && onDeleteByIds) {
+                await Promise.resolve(onDeleteByIds(allSelectedIds));
+            } else if (onDelete) {
+                await Promise.resolve(onDelete(rows));
+            }
             setOpen(false);
             onDeleted?.();
         } finally {
             setIsDeleting(false);
         }
-    }, [rows, onDelete, onDeleted]);
+    }, [allSelectedIds, onDeleteByIds, rows, onDelete, onDeleted, hasSelection, isDeleting]);
 
     const handleOpenChange = React.useCallback((value: boolean) => {
         if (!isDeleting) {

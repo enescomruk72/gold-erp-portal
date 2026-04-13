@@ -71,8 +71,6 @@ function FilterFormContent({
     const [kategoriId, setKategoriId] = React.useState<number | "">(initial.kategoriId);
     const [markaId, setMarkaId] = React.useState<number | "">(initial.markaId);
     const [materyalId, setMateryalId] = React.useState<number | "">(initial.materyalId);
-    const [minFiyat, setMinFiyat] = React.useState(initial.minFiyat);
-    const [maxFiyat, setMaxFiyat] = React.useState(initial.maxFiyat);
     const [minGram, setMinGram] = React.useState(initial.minGram);
     const [maxGram, setMaxGram] = React.useState(initial.maxGram);
     const [stoktakiUrunler, setStoktakiUrunler] = React.useState(initial.stoktakiUrunler);
@@ -82,10 +80,6 @@ function FilterFormContent({
         if (kategoriId !== "") newFilters.push({ id: "kategoriId", value: kategoriId, operator: "eq" });
         if (markaId !== "") newFilters.push({ id: "markaId", value: markaId, operator: "eq" });
         if (materyalId !== "") newFilters.push({ id: "materyalId", value: materyalId, operator: "eq" });
-        const minF = parseFloat(minFiyat);
-        if (!Number.isNaN(minF) && minF >= 0) newFilters.push({ id: "minFiyat", value: minF, operator: "eq" });
-        const maxF = parseFloat(maxFiyat);
-        if (!Number.isNaN(maxF) && maxF >= 0) newFilters.push({ id: "maxFiyat", value: maxF, operator: "eq" });
         const minG = parseFloat(minGram);
         if (!Number.isNaN(minG) && minG >= 0) newFilters.push({ id: "minGram", value: minG, operator: "eq" });
         const maxG = parseFloat(maxGram);
@@ -160,27 +154,6 @@ function FilterFormContent({
                                     ))}
                                 </SelectContent>
                             </Select>
-                        </div>
-                        <div className="space-y-2">
-                            <Label>Fiyat aralığı (TL)</Label>
-                            <div className="flex gap-2">
-                                <Input
-                                    type="number"
-                                    placeholder="Min"
-                                    min={0}
-                                    step={100}
-                                    value={minFiyat}
-                                    onChange={(e) => setMinFiyat(e.target.value)}
-                                />
-                                <Input
-                                    type="number"
-                                    placeholder="Max"
-                                    min={0}
-                                    step={100}
-                                    value={maxFiyat}
-                                    onChange={(e) => setMaxFiyat(e.target.value)}
-                                />
-                            </div>
                         </div>
                         <div className="space-y-2">
                             <Label>Gram aralığı</Label>

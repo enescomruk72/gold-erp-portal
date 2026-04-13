@@ -42,7 +42,7 @@ export function useGetProducts(params?: GetProductsParams) {
                 ...(params?.aktif !== undefined && { aktif: params.aktif }),
             },
         },
-        useProxy: true,
+        useProxy: false,
     });
 
     const data = (query.data?.data ?? []) as IProductDTO[];

@@ -47,8 +47,7 @@ export function SiparisListTable() {
         },
     });
 
-    const selectedRows = table.table.getSelectedRowModel().rows;
-    const hasSelection = selectedRows.length > 0;
+    const hasSelection = table.state.selectedCount > 0;
 
     return (
         <>
@@ -75,6 +74,7 @@ export function SiparisListTable() {
                                     {hasSelection ? (
                                         <ExportSelected
                                             table={table.table}
+                                            allSelectedIds={table.state.selectedIds}
                                             filename="siparisler"
                                         />
                                     ) : (

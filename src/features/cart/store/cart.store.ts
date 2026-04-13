@@ -73,13 +73,14 @@ function createCartItem(
     const imageUrl =
         product.images?.find((img) => img.varsayilanMi)?.url ??
         product.images?.[0]?.url ??
-        getMockProductImageUrl(0);
+        null;
+    const resolvedImageUrl = imageUrl ?? getMockProductImageUrl(0);
 
     return {
         productId: product.id,
         urunKodu: product.urunKodu,
         urunAdi: product.urunAdi,
-        imageUrl,
+        imageUrl: resolvedImageUrl,
         birimAdi: product.birim?.birimAdi ?? "Adet",
         birimKodu: product.birim?.birimKodu ?? "ADET",
         kategoriAdi: product.kategori?.kategoriAdi,
@@ -87,7 +88,7 @@ function createCartItem(
         miktar,
         birimFiyat,
         kdvOrani,
-        agirlikGr: product.agirlikGr,
+        agirlikGr: product.ortalamaAgirlik ?? product.agirlikGr,
         hasMilyem: product.hasMilyem,
         iscilikMilyem: product.iscilikMilyem,
         ...totals,

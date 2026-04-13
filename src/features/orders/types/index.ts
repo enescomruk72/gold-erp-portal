@@ -4,7 +4,7 @@
  */
 
 export type SiparisTipi = 'PERAKENDE' | 'TOPTAN' | 'E_TICARET' | 'OZEL_URETIM' | 'KONSINYE';
-export type SiparisDurumu = 'BEKLEMEDE' | 'ONAYLANDI' | 'TESLIM_EDILDI';
+export type SiparisDurumu = 'TASLAK' | 'BEKLEMEDE' | 'ONAYLANDI' | 'TESLIM_EDILDI' | 'IPTAL' | 'IADE';
 export type SiparisOdemeDurumu = 'ODENMEDI' | 'KISME_ODENDI' | 'ODENDI';
 
 export interface ICariSummaryDTO {
@@ -42,7 +42,6 @@ export interface ISiparisListDTO {
     kargoTakipNo?: string;
     aciklama?: string;
     notlar?: string;
-    icNotlar?: string;
     createdAt: string;
     updatedAt: string;
 }

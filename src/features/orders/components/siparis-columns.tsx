@@ -32,9 +32,12 @@ const siparisTipiLabels: Record<string, string> = {
 };
 
 const siparisDurumuLabels: Record<string, string> = {
+    TASLAK: 'Taslak',
     BEKLEMEDE: 'Beklemede',
     ONAYLANDI: 'Onaylandı',
     TESLIM_EDILDI: 'Teslim Edildi',
+    IPTAL: 'İptal Edildi',
+    IADE: 'İade Edildi',
 };
 
 const odemeDurumuLabels: Record<string, string> = {
