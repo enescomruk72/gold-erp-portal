@@ -13,6 +13,6 @@ export function useGetProduct(id: string | null, enabled: boolean = true) {
         queryOptions: {
             enabled: Boolean(id) && enabled,
         },
-        useProxy: false,
+        useProxy: true,
     });
 }
