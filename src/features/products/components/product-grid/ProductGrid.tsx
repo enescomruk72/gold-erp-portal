@@ -57,7 +57,7 @@ export function ProductGrid({ onProductDetailClick }: ProductGridProps) {
         gridId: "products",
         columns: productColumns,
         apiEndpoint: "/b2b/products",
-        useProxy: false,
+        useProxy: true,
         statePrefix: "products",
         buildCustomParams: buildProductFilters,
         config: {
