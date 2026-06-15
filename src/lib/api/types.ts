@@ -54,6 +54,8 @@ export interface RequestOptions extends Omit<RequestInit, "body"> {
     useProxy?: boolean;
     requiresAuth?: boolean;
     contentType?: string;
+    /** Dahili: 401 sonrası tek retry */
+    _retried401?: boolean;
 }
 
 export type FetchMode = "direct" | "proxy";

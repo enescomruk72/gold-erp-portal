@@ -39,10 +39,33 @@ export interface IProductBirimDetailDTO {
     birimAdi: string;
 }
 
-export interface IProductMateryalDetailDTO {
+export interface IProductAyarDetailDTO {
     id: number;
-    materyalAdi: string;
+    ayarAdi: string;
     milyemKatsayisi?: number;
+}
+
+export interface IProductOzellikItemDTO {
+    ozellikId: number;
+    ozellikAdi?: string;
+    degerler: Array<{ degerId: number; degerAdi?: string }>;
+}
+
+export interface IProductGrupDTO {
+    id: string;
+    grupAdi: string;
+    grupKodu: string;
+}
+
+export interface IProductVaryantGramajItemDTO {
+    gram: number;
+    label?: string;
+}
+
+export interface IProductGramajOzetiDTO {
+    min: number;
+    max: number;
+    items: IProductVaryantGramajItemDTO[];
 }
 
 export interface IProductDTO {
@@ -56,7 +79,7 @@ export interface IProductDTO {
     kategori?: IProductKategoriDetailDTO;
     marka?: IProductMarkaDetailDTO;
     birim?: IProductBirimDetailDTO;
-    materyal?: IProductMateryalDetailDTO;
+    ayar?: IProductAyarDetailDTO;
     /** Gram — backend: ortalamaAgirlik */
     ortalamaAgirlik?: number;
     /** @deprecated Backend artık göndermiyor; ortalamaAgirlik kullanın */
@@ -74,12 +97,17 @@ export interface IProductDTO {
     tahminiUretimGun?: number | null;
     aciklama?: string;
     aktifMi: boolean;
-    materyalId?: number;
+    ayarId?: number;
     katalogdaGoster?: boolean;
     yeni?: boolean;
     indirimli?: boolean;
     images: IProductImageDTO[];
     bakiyeCount?: number;
+    grup?: IProductGrupDTO;
+    ozellikler?: IProductOzellikItemDTO[];
+    publicSlug?: string | null;
+    gramajOzeti?: IProductGramajOzetiDTO;
+    /** @deprecated grup kullanın */
     aile?: { id: string; aileAdi: string; aileKodu: string };
     createdAt: string;
     updatedAt: string;

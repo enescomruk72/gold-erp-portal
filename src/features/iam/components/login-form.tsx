@@ -3,7 +3,8 @@
 import type { FieldValues } from "react-hook-form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, LogIn } from "lucide-react";
+import Link from "next/link";
+import { EyeIcon, EyeOffIcon, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -11,19 +12,21 @@ import {
     FormControl,
     FormField,
     FormItem,
-    FormLabel,
     FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import { InputWithInsetLabel } from "@/components/ui/input";
 import { loginSchema, type LoginFormDTO } from "../schemas/auth.schemas";
 import { useLogin } from "../api/use-login";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { useState } from "react";
 
 export function LoginForm() {
+    const [isPasswordVisible, setIsPasswordVisible] = useState(false);
     const form = useForm<LoginFormDTO>({
         resolver: zodResolver(loginSchema),
         defaultValues: {
-            userNameOrEmail: "test_portal",
-            password: "Portal123!",
+            userNameOrEmail: "",
+            password: "",
         },
         mode: "onBlur",
     });
@@ -35,26 +38,24 @@ export function LoginForm() {
     };
 
     return (
-        <div className="grid gap-6">
-            <Form {...form}>
-                <form
-                    onSubmit={form.handleSubmit(onSubmit)}
-                    className="space-y-4"
-                >
+        <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-base">
+                <TooltipProvider>
                     <FormField
                         control={form.control}
                         name="userNameOrEmail"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Eposta veya Kullanıcı Adı</FormLabel>
                                 <FormControl>
-                                    <Input
-                                        type="text"
+                                    <InputWithInsetLabel
+                                        id="userNameOrEmail"
+                                        label="E-posta veya Kullanıcı Adı"
+                                        isRequired
                                         inputMode="email"
-                                        placeholder="Eposta veya Kullanıcı Adı"
+                                        placeholder="E-posta veya kullanıcı adınız"
                                         autoComplete="off"
-                                        autoSave="off"
                                         disabled={isPending}
+                                        tabIndex={1}
                                         {...field}
                                     />
                                 </FormControl>
@@ -68,15 +69,35 @@ export function LoginForm() {
                         name="password"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Şifre</FormLabel>
                                 <FormControl>
-                                    <Input
-                                        type="password"
-                                        inputMode="text"
-                                        placeholder="••••••••"
+                                    <InputWithInsetLabel
+                                        id="password"
+                                        label="Şifre"
                                         autoComplete="off"
-                                        autoSave="off"
+                                        isRequired
+                                        type={isPasswordVisible ? "text" : "password"}
+                                        title={isPasswordVisible ? 'Gizle' : 'Göster'}
+                                        inputMode="text"
+                                        placeholder="Şifrenizi giriniz"
                                         disabled={isPending}
+                                        tabIndex={2}
+                                        trailing={
+                                            <Button
+                                                variant='ghost'
+                                                type="button"
+                                                title={isPasswordVisible ? 'Gizle' : 'Göster'}
+                                                size='icon'
+                                                onClick={() => setIsPasswordVisible(prevState => !prevState)}
+                                                className='justify-center items-center text-muted-foreground focus-visible:ring-ring/50 rounded-full hover:bg-transparent'
+                                            >
+                                                {isPasswordVisible ? (
+                                                    <EyeOffIcon />
+                                                ) : (
+                                                    <EyeIcon />
+                                                )}
+                                                <span className='sr-only'>{isPasswordVisible ? 'Gizle' : 'Göster'}</span>
+                                            </Button>
+                                        }
                                         {...field}
                                     />
                                 </FormControl>
@@ -84,21 +105,28 @@ export function LoginForm() {
                             </FormItem>
                         )}
                     />
-
-                    <Button
-                        type="submit"
-                        className="w-full"
-                        disabled={isPending}
+                </TooltipProvider>
+                <div className="flex items-center justify-end">
+                    <Link
+                        href="/auth/forgot-password"
+                        className="text-xs font-medium text-primary hover:underline"
+                        tabIndex={3}
                     >
-                        {isPending ? (
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        ) : (
-                            <LogIn className="mr-2 h-4 w-4" />
-                        )}
-                        Giriş Yap
-                    </Button>
-                </form>
-            </Form>
-        </div>
+                        Şifremi Unuttum
+                    </Link>
+                </div>
+
+                <Button tabIndex={3} type="submit" className="mt-2 h-12 w-full" size="lg" disabled={isPending}>
+                    {isPending ? (
+                        <>
+                            <Loader2 className="size-4 animate-spin" />
+                            Giriş yapılıyor...
+                        </>
+                    ) : (
+                        'Giriş Yap'
+                    )}
+                </Button>
+            </form>
+        </Form>
     );
 }

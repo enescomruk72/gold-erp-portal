@@ -116,58 +116,14 @@
   --gutter: 1rem;
   --header-height: 3.5rem;
   --doc-controls-height: 3.5rem;
+
+  /* Storefront sabit header — navShell ResizeObserver ile güncellenir */
+  --storefront-nav-shell-height: 6.75rem;
+  --storefront-sticky-offset: 2rem;
+  --storefront-sticky-top: calc(var(--storefront-nav-shell-height) + var(--storefront-sticky-offset));
+  --storefront-scroll-margin: calc(var(--storefront-sticky-top) + 0.75rem);
 }
 
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
-
-  --table-container-background: oklch(0.2478 0 0);
-  --table-header-background: oklch(0.285 0 0);
-  --table-body-background: transparent;
-  --table-border: oklch(0.3089 0.0038 264.51);
-  --table-header-bottom-border: oklch(0.4946 0.0142 259.82);
-  --table-container-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 1), 0px 1px 3px 1px rgba(0, 0, 0, 1);
-
-  --input-shadow: 0 1px 2px rgba(0, 0, 0, 0.6), 0 1px 3px rgba(0, 0, 0, 0.7);
-  --shadow-google-sm: 0 1px 2px 0 rgba(60, 64, 67, 0.302), 0 2px 6px 2px rgba(60, 64, 67, 0.149);
-  --shadow-google-md: 0 4px 6px -1px rgba(60, 64, 67, 0.15), 0 2px 4px -2px rgba(60, 64, 67, 0.3);
-  --shadow-google: rgba(0, 0, 0, 0.05), 0 4px 12px rgba(0, 0, 0, 0.05);
-
-  --base: 1rem;
-  --gutter: 1rem;
-  --header-height: 3.5rem;
-  --doc-controls-height: 3.5rem;
-}
 
 @layer base {
   * {
@@ -207,22 +163,18 @@
   }
 
   html {
-    @apply antialiased scroll-smooth;
+    /* clip: yatay taşmayı keser, sticky'yi hidden gibi kırmaz */
+    @apply min-h-full overflow-x-clip antialiased scroll-smooth;
+    scroll-padding-top: var(--storefront-scroll-margin);
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply min-h-full overflow-x-clip bg-background text-foreground;
     font-synthesis: none;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     -webkit-text-size-adjust: 100%;
-  }
-
-  html,
-  body,
-  #__next {
-    @apply bg-background text-foreground h-full overflow-x-hidden overflow-y-auto;
     scrollbar-width: none;
     -ms-overflow-style: none;
 
@@ -246,6 +198,7 @@
     -webkit-appearance: none;
     appearance: none;
   }
+
   input[type='search']::-ms-clear {
     display: none;
   }
@@ -264,4 +217,16 @@
     margin: 0;
   }
 
+}
+
+/* Yasal hub / checkout aside — Tailwind sticky bazen kırılıyor; düz CSS */
+@media (min-width: 1024px) {
+  .storefront-legal-sidebar {
+    position: sticky;
+    top: var(--storefront-sticky-top);
+    z-index: 10;
+    max-height: calc(100dvh - var(--storefront-sticky-top) - var(--gutter));
+    overflow-y: auto;
+    align-self: flex-start;
+  }
 }

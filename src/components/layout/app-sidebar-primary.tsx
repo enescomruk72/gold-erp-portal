@@ -9,7 +9,6 @@ import {
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
-    useSidebar,
 } from "@/components/ui/sidebar";
 import type { NavGroup, NavMainItem } from "@/constants/navigation/types";
 import { SIDEBAR_NAVIGATION } from "@/constants/navigation/sidebar.constants";

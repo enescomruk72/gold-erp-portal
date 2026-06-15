@@ -10,17 +10,6 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
 import type { ColumnStoreState, CreateColumnStoreOptions, PersistedColumnPreferences } from '@/components/shared/data-table/types';
 import { COLUMN_PREFERENCES_KEY } from '@/components/shared/data-table/config';
-
-/**
- * Default column preferences
- */
-const DEFAULT_PREFERENCES = {
-    visibility: {},
-    order: [],
-    sizing: {},
-    pinning: { left: [], right: [] },
-};
-
 /**
  * Create a column store for a specific table
  * 

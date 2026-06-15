@@ -1,7 +1,13 @@
 import type { NextAuthConfig, User } from "next-auth";
+import type { JWT } from "next-auth/jwt";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { nextAuthSchema } from "@/features/iam/schemas/auth.schemas";
 import { env } from "./env";
+
+type AuthUser = User & {
+    accessTokenExpiresIn: number;
+    refreshTokenExpiresIn: number;
+};
 
 export const authConfig = {
     providers: [
@@ -13,6 +19,13 @@ export const authConfig = {
             ): Promise<User | null> => {
                 try {
                     if (!credentials?.id) return null;
+
+                    const accessTokenExpiresIn = Number(
+                        credentials.accessTokenExpiresIn
+                    );
+                    const refreshTokenExpiresIn = Number(
+                        credentials.refreshTokenExpiresIn
+                    );
 
                     const normalizedCredentials = {
                         id: String(credentials.id),
@@ -26,8 +39,8 @@ export const authConfig = {
                                 ? JSON.parse(credentials.cari)
                                 : typeof credentials.cari === "object" &&
                                     credentials.cari !== null
-                                    ? credentials.cari
-                                    : { id: "", cariAdi: "" },
+                                  ? credentials.cari
+                                  : { id: "", cariAdi: "" },
                         isActive:
                             typeof credentials.isActive === "string"
                                 ? credentials.isActive === "true"
@@ -37,14 +50,12 @@ export const authConfig = {
                             typeof credentials.roles === "string"
                                 ? JSON.parse(credentials.roles)
                                 : Array.isArray(credentials.roles)
-                                    ? credentials.roles
-                                    : [],
+                                  ? credentials.roles
+                                  : [],
                         accessToken: String(credentials.accessToken || ""),
                         refreshToken: String(credentials.refreshToken || ""),
-                        expiresIn:
-                            typeof credentials.expiresIn === "string"
-                                ? Number(credentials.expiresIn)
-                                : Number(credentials.expiresIn || 0),
+                        accessTokenExpiresIn,
+                        refreshTokenExpiresIn,
                     };
 
                     const validatedCredentials =
@@ -59,7 +70,7 @@ export const authConfig = {
 
                     const { data } = validatedCredentials;
 
-                    const user: User = {
+                    const user: AuthUser = {
                         id: data.id,
                         userName: data.userName,
                         firstName: data.firstName,
@@ -75,7 +86,9 @@ export const authConfig = {
                         roles: Array.isArray(data.roles) ? data.roles : [],
                         accessToken: data.accessToken,
                         refreshToken: data.refreshToken,
-                    } as User;
+                        accessTokenExpiresIn: data.accessTokenExpiresIn,
+                        refreshTokenExpiresIn: data.refreshTokenExpiresIn,
+                    };
 
                     return user;
                 } catch (error) {
@@ -88,19 +101,45 @@ export const authConfig = {
     callbacks: {
         async jwt({ token, user }) {
             if (user) {
-                token.id = user.id;
-                token.roles = user.roles;
-                token.accessToken = user.accessToken;
-                token.refreshToken = user.refreshToken;
-                token.isActive = user.isActive;
-                token.lastLogin = user.lastLogin;
-                token.email = user.email;
-                token.phone = user.phone;
-                token.userName = user.userName;
-                token.firstName = user.firstName;
-                token.lastName = user.lastName;
-                token.cari = { ...user.cari };
+                const authUser = user as AuthUser;
+                token.id = authUser.id;
+                token.roles = authUser.roles;
+                token.accessToken = authUser.accessToken;
+                token.refreshToken = authUser.refreshToken;
+                token.isActive = authUser.isActive;
+                token.lastLogin = authUser.lastLogin;
+                token.email = authUser.email;
+                token.phone = authUser.phone;
+                token.userName = authUser.userName;
+                token.firstName = authUser.firstName;
+                token.lastName = authUser.lastName;
+                token.cari = { ...authUser.cari };
+                token.accessTokenExpires =
+                    Date.now() + authUser.accessTokenExpiresIn * 1000;
+                token.refreshTokenExpires =
+                    Date.now() + authUser.refreshTokenExpiresIn * 1000;
+                token.error = undefined;
+                return token;
             }
+
+            if (
+                token.refreshTokenExpires &&
+                Date.now() >= (token.refreshTokenExpires as number)
+            ) {
+                return { ...token, error: "RefreshAccessTokenError" };
+            }
+
+            if (
+                token.accessTokenExpires &&
+                Date.now() < (token.accessTokenExpires as number) - 10_000
+            ) {
+                return token;
+            }
+
+            if (token.refreshToken) {
+                return refreshAccessToken(token);
+            }
+
             return token;
         },
         async session({ session, token }) {
@@ -119,6 +158,7 @@ export const authConfig = {
             } as User;
             session.accessToken = token.accessToken as string;
             session.user = user as User & { emailVerified: Date };
+            if (token.error) session.error = token.error;
             return session;
         },
         async redirect({ url, baseUrl }) {
@@ -129,7 +169,8 @@ export const authConfig = {
     },
     session: {
         strategy: "jwt",
-        maxAge: 24 * 60 * 60, // 24 saat
+        /** Cookie üst sınırı; gerçek oturum süresi backend refreshTokenExpiresIn ile belirlenir */
+        maxAge: 30 * 24 * 60 * 60,
     },
     pages: {
         signIn: "/auth/login",
@@ -138,3 +179,37 @@ export const authConfig = {
     secret: env.authSecret,
     trustHost: true,
 } satisfies NextAuthConfig;
+
+async function refreshAccessToken(token: JWT): Promise<JWT> {
+    try {
+        const response = await fetch(
+            `${env.nextPublicApiUrl}/b2b/refresh-token`,
+            {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ refreshToken: token.refreshToken }),
+            }
+        );
+
+        const data = await response.json();
+        if (!response.ok || !data?.data?.accessToken) {
+            throw new Error(data?.message ?? "Refresh failed");
+        }
+
+        const { accessToken, refreshToken: newRefresh, expiresIn } = data.data;
+        if (typeof expiresIn !== "number" || expiresIn <= 0) {
+            throw new Error("Refresh response missing expiresIn");
+        }
+
+        return {
+            ...token,
+            accessToken,
+            refreshToken: newRefresh ?? token.refreshToken,
+            accessTokenExpires: Date.now() + expiresIn * 1000,
+            error: undefined,
+        };
+    } catch (error) {
+        console.error("RefreshAccessTokenError", error);
+        return { ...token, error: "RefreshAccessTokenError" };
+    }
+}

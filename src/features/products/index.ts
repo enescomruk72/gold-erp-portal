@@ -1,4 +1,11 @@
 export { ProductGrid, ProductToolbar, ProductPagination, ProductDetailModal } from "./components";
+export { ProductListingPage } from "./components/product-listing";
+export { ProductDetailPage } from "./components/product-detail";
+export { StorefrontProductCard } from "./components/storefront-product-card";
 export { useGetProducts } from "./api/use-get-products";
+export { useGetProductBySlug } from "./api/use-get-product-by-slug";
+export { useGetProductFilters } from "./api/use-get-product-filters";
 export { useProductsSearchParams } from "./lib/search-params";
+export { useProductListingSearchParams } from "./lib/listing-search-params";
+export { productPublicHref } from "./lib/product-href";
 export type { IProductDTO } from "./types";

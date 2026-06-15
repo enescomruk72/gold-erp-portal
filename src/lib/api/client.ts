@@ -4,6 +4,7 @@
  */
 
 import { env } from "@/config/env";
+import { handleSessionExpired } from "@/lib/auth/session-expired";
 import { tokenManager, type TokenManager } from "./token-manager";
 import { ApiClientError, NetworkError, TokenRefreshError } from "./errors";
 import type { ApiResponse, RequestOptions, FetchMode, ApiError } from "./types";
@@ -74,6 +75,18 @@ export class ApiClient {
             const data = await this.parseResponse<T>(response);
 
             if (response.status === 401 && requiresAuth) {
+                if (options._retried401) {
+                    await handleSessionExpired();
+                    throw new ApiClientError({
+                        success: false,
+                        message: "Oturum süresi doldu, lütfen tekrar giriş yapın",
+                        data: null,
+                        statusCode: 401,
+                        type: "UNAUTHORIZED",
+                        timestamp: new Date().toISOString(),
+                        requestId: "",
+                    });
+                }
                 return await this.retryWithRefresh<T>(endpoint, options);
             }
 
@@ -83,10 +96,11 @@ export class ApiClient {
 
             return data;
         } catch (error) {
-            if (
-                error instanceof ApiClientError ||
-                error instanceof TokenRefreshError
-            ) {
+            if (error instanceof TokenRefreshError) {
+                await handleSessionExpired();
+                throw error;
+            }
+            if (error instanceof ApiClientError) {
                 throw error;
             }
             if (error instanceof TypeError && error.message === "Failed to fetch") {
@@ -214,8 +228,10 @@ export class ApiClient {
             return await this.fetch<T>(endpoint, {
                 ...options,
                 requiresAuth: true,
+                _retried401: true,
             });
         } catch (error) {
+            await handleSessionExpired();
             if (error instanceof TokenRefreshError) throw error;
             throw new ApiClientError({
                 success: false,

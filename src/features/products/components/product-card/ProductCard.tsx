@@ -194,9 +194,9 @@ export function ProductCard({
                                     İşçilik {toplamIscilikMilyem}‰
                                 </span>
                             ) : null}
-                            {product.materyal?.milyemKatsayisi != null ? (
+                            {product.ayar?.milyemKatsayisi != null ? (
                                 <span className="text-muted-foreground">
-                                    Has {product.materyal.milyemKatsayisi}‰
+                                    Has {product.ayar.milyemKatsayisi}‰
                                 </span>
                             ) : null}
                         </div>
@@ -204,14 +204,14 @@ export function ProductCard({
                             <Badge variant="outline" className="text-[11px] font-normal tabular-nums">
                                 Ort. {product.ortalamaAgirlik ?? 0}
                             </Badge>
-                            {product.materyal?.materyalAdi ? (
+                            {product.ayar?.ayarAdi ? (
                                 <Badge variant="outline" className="max-w-full truncate text-[11px] font-normal">
-                                    {product.materyal.materyalAdi}
+                                    {product.ayar.ayarAdi}
                                 </Badge>
                             ) : null}
 
                             <Badge variant="outline" className="max-w-full truncate text-[11px] font-normal">
-                                {(product.materyal?.milyemKatsayisi ?? 0) * 1000}‰ Milyem
+                                {(product.ayar?.milyemKatsayisi ?? 0) * 1000}‰ Milyem
                             </Badge>
                         </div>
                         {product.kategori?.kategoriAdi && (

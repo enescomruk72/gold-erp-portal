@@ -15,9 +15,9 @@ export interface BrandOption {
     markaAdi: string;
 }
 
-export interface MateryalOption {
+export interface SaflikAyarOption {
     id: number;
-    materyalAdi: string;
+    ayarAdi: string;
 }
 
 export function useGetCategories() {
@@ -44,14 +44,14 @@ export function useGetBrands() {
     return { ...query, data };
 }
 
-export function useGetMateryaller() {
-    const query = useApiQuery<MateryalOption[]>("/v1/b2b/materials", {
-        queryKey: ["b2b", "materyaller"],
+export function useGetSaflikAyarlari() {
+    const query = useApiQuery<SaflikAyarOption[]>("/v1/b2b/materials", {
+        queryKey: ["b2b", "saflik-ayarlari"],
         apiOptions: {
             params: { aktif: true },
         },
         useProxy: true,
     });
-    const data = (query.data?.data ?? []) as MateryalOption[];
+    const data = (query.data?.data ?? []) as SaflikAyarOption[];
     return { ...query, data };
 }

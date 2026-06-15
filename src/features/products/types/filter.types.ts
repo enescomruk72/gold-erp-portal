@@ -4,7 +4,7 @@
 export interface ProductFilterValues {
     kategoriId?: number;
     markaId?: number;
-    materyalId?: number;
+    ayarId?: number;
     minFiyat?: number;
     maxFiyat?: number;
     minGram?: number;

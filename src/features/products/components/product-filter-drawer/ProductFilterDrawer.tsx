@@ -26,7 +26,7 @@ import {
 import {
     useGetCategories,
     useGetBrands,
-    useGetMateryaller,
+    useGetSaflikAyarlari,
 } from "@/features/products/api/use-get-filter-options";
 import type { FilterState } from "@/components/shared/data-table/types";
 import type { UseDataGridReturn } from "@/components/shared/data-grid/types";
@@ -43,7 +43,7 @@ function deriveInitialFromFilters(filters: FilterState[]) {
     return {
         kategoriId: getFilterValue<number>(filters, "kategoriId") ?? ("" as const),
         markaId: getFilterValue<number>(filters, "markaId") ?? ("" as const),
-        materyalId: getFilterValue<number>(filters, "materyalId") ?? ("" as const),
+        ayarId: getFilterValue<number>(filters, "ayarId") ?? ("" as const),
         minFiyat: String(getFilterValue<number>(filters, "minFiyat") ?? ""),
         maxFiyat: String(getFilterValue<number>(filters, "maxFiyat") ?? ""),
         minGram: String(getFilterValue<number>(filters, "minGram") ?? ""),
@@ -57,7 +57,7 @@ interface FilterFormContentProps {
     grid: UseDataGridReturn<IProductDTO>;
     categories: { id: number; kategoriAdi: string }[];
     brands: { id: number; markaAdi: string }[];
-    materyaller: { id: number; materyalAdi: string }[];
+    saflikAyarlari: { id: number; ayarAdi: string }[];
 }
 
 function FilterFormContent({
@@ -65,12 +65,12 @@ function FilterFormContent({
     grid,
     categories,
     brands,
-    materyaller,
+    saflikAyarlari,
 }: FilterFormContentProps) {
     const initial = deriveInitialFromFilters(filters);
     const [kategoriId, setKategoriId] = React.useState<number | "">(initial.kategoriId);
     const [markaId, setMarkaId] = React.useState<number | "">(initial.markaId);
-    const [materyalId, setMateryalId] = React.useState<number | "">(initial.materyalId);
+    const [ayarId, setAyarId] = React.useState<number | "">(initial.ayarId);
     const [minGram, setMinGram] = React.useState(initial.minGram);
     const [maxGram, setMaxGram] = React.useState(initial.maxGram);
     const [stoktakiUrunler, setStoktakiUrunler] = React.useState(initial.stoktakiUrunler);
@@ -79,7 +79,7 @@ function FilterFormContent({
         const newFilters: FilterState[] = [];
         if (kategoriId !== "") newFilters.push({ id: "kategoriId", value: kategoriId, operator: "eq" });
         if (markaId !== "") newFilters.push({ id: "markaId", value: markaId, operator: "eq" });
-        if (materyalId !== "") newFilters.push({ id: "materyalId", value: materyalId, operator: "eq" });
+        if (ayarId !== "") newFilters.push({ id: "ayarId", value: ayarId, operator: "eq" });
         const minG = parseFloat(minGram);
         if (!Number.isNaN(minG) && minG >= 0) newFilters.push({ id: "minGram", value: minG, operator: "eq" });
         const maxG = parseFloat(maxGram);
@@ -137,19 +137,19 @@ function FilterFormContent({
                             </Select>
                         </div>
                         <div className="space-y-2">
-                            <Label>Materyal</Label>
+                            <Label>Saflık ayarı</Label>
                             <Select
-                                value={materyalId === "" ? "all" : String(materyalId)}
-                                onValueChange={(v) => setMateryalId(v === "all" ? "" : Number(v))}
+                                value={ayarId === "" ? "all" : String(ayarId)}
+                                onValueChange={(v) => setAyarId(v === "all" ? "" : Number(v))}
                             >
                                 <SelectTrigger>
                                     <SelectValue placeholder="Tümü" />
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="all">Tümü</SelectItem>
-                                    {materyaller?.map((m) => (
+                                    {saflikAyarlari?.map((m) => (
                                         <SelectItem key={m.id} value={String(m.id)}>
-                                            {m.materyalAdi}
+                                            {m.ayarAdi}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
@@ -247,7 +247,7 @@ export function ProductFilterDrawer({
 }: ProductFilterDrawerProps) {
     const { data: categories } = useGetCategories();
     const { data: brands } = useGetBrands();
-    const { data: materyaller } = useGetMateryaller();
+    const { data: saflikAyarlari } = useGetSaflikAyarlari();
 
     const isMobile = useIsMobile(768);
 
@@ -294,7 +294,7 @@ export function ProductFilterDrawer({
                     grid={grid}
                     categories={categories ?? []}
                     brands={brands ?? []}
-                    materyaller={materyaller ?? []}
+                    saflikAyarlari={saflikAyarlari ?? []}
                 />
             </DrawerContent>
         </Drawer>

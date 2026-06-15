@@ -9,4 +9,8 @@ export const productsQueryKeys = {
         [...productsQueryKeys.lists(), params ?? {}] as const,
     details: () => [...productsQueryKeys.all, "detail"] as const,
     detail: (id: string) => [...productsQueryKeys.details(), id] as const,
+    detailBySlug: (slug: string, v?: string) =>
+        [...productsQueryKeys.details(), 'slug', slug, v ?? ''] as const,
+    filters: (kategoriId: number) =>
+        [...productsQueryKeys.all, "filters", kategoriId] as const,
 };

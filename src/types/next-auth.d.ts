@@ -46,6 +46,8 @@ declare module "next-auth" {
         roles: string[];
         accessToken: string;
         refreshToken: string;
+        accessTokenExpiresIn: number;
+        refreshTokenExpiresIn: number;
     }
 }
 
@@ -55,6 +57,8 @@ declare module "next-auth/jwt" {
         roles: string[];
         accessToken: string;
         refreshToken: string;
+        accessTokenExpires?: number;
+        refreshTokenExpires?: number;
         cari?: { id: string; cariAdi: string };
         error?:
         | "RefreshAccessTokenError"

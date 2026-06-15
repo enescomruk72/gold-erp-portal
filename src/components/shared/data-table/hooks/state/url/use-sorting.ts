@@ -10,7 +10,7 @@
 import { useCallback, useMemo } from 'react';
 import { parseAsString, useQueryState } from 'nuqs';
 import type { SortingState } from '../../../types';
-import { URL_PARAMS, SORT_DIRECTIONS } from '../../../config';
+import { URL_PARAMS } from '../../../config';
 import { serializeSorting, deserializeSorting } from '../../../utils/query';
 
 /**

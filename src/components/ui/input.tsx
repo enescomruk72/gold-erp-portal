@@ -31,7 +31,7 @@ function InputWithInsetLabel({
   optionalText,
   error,
   leading,
-  onClear,
+  trailing,
   onChange,
   ...props
 }: React.ComponentProps<"input"> & {
@@ -43,8 +43,8 @@ function InputWithInsetLabel({
   optionalText?: string;
   error?: string;
   leading?: React.ReactNode;
+  trailing?: React.ReactNode;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onClear?: () => void;
 }) {
 
   return (
@@ -73,6 +73,7 @@ function InputWithInsetLabel({
             onChange={onChange}
             {...props}
           />
+          {trailing && trailing}
           {(error || description) && (
             <Tooltip>
               <TooltipTrigger asChild>

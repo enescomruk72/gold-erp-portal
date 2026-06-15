@@ -6,8 +6,11 @@ import {
     defaultShouldDehydrateQuery,
 } from "@tanstack/react-query";
 import { signOut } from "next-auth/react";
+import { ApiClientError } from "@/lib/api/errors";
+import { handleSessionExpired } from "@/lib/auth/session-expired";
 
-let globalSessionManager: { handleBackendSessionExpired: () => void } | null = null;
+let globalSessionManager: { handleBackendSessionExpired: () => void } | null =
+    null;
 
 export const setGlobalSessionManager = (manager: {
     handleBackendSessionExpired: () => void;
@@ -16,6 +19,8 @@ export const setGlobalSessionManager = (manager: {
 };
 
 function isUnauthorized(error: unknown): boolean {
+    if (error instanceof ApiClientError && error.isUnauthorized) return true;
+
     const err = error as Error & {
         status?: number;
         statusCode?: number;
@@ -30,14 +35,16 @@ function isUnauthorized(error: unknown): boolean {
 
 function handleGlobalError(error: unknown) {
     if (isServer) return;
-    if (isUnauthorized(error)) {
-        if (globalSessionManager) {
-            globalSessionManager.handleBackendSessionExpired();
-        } else {
-            signOut({ callbackUrl: "/auth/login" });
-        }
+    if (!isUnauthorized(error)) return;
+
+    if (globalSessionManager) {
+        globalSessionManager.handleBackendSessionExpired();
         return;
     }
+
+    void handleSessionExpired().catch(() => {
+        signOut({ callbackUrl: "/auth/login" });
+    });
 }
 
 function makeQueryClient() {
@@ -51,7 +58,10 @@ function makeQueryClient() {
         defaultOptions: {
             queries: {
                 staleTime: 60 * 1000,
-                retry: 1,
+                retry: (failureCount, error) => {
+                    if (isUnauthorized(error)) return false;
+                    return failureCount < 1;
+                },
                 refetchOnWindowFocus: false,
                 throwOnError: false,
             },

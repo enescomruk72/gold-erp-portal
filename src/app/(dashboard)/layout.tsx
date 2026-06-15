@@ -1,5 +1,6 @@
-import AppRootLayout from "@/components/layout/root.layout";
-import PageHeader from "@/components/shared/page-header";
+import { PortalMaintenanceBanner } from '@/features/settings';
+
+import StorefrontLayout from '@/components/layout/storefront/storefront-layout';
 
 export default function DashboardLayout({
     children,
@@ -7,9 +8,9 @@ export default function DashboardLayout({
     children: React.ReactNode;
 }) {
     return (
-        <AppRootLayout>
-            <PageHeader />
-            {children}
-        </AppRootLayout>
+        <>
+            <PortalMaintenanceBanner />
+            <StorefrontLayout>{children}</StorefrontLayout>
+        </>
     );
 }

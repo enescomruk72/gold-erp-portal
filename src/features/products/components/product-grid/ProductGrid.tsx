@@ -37,8 +37,8 @@ function buildProductFilters(filters: { id: string; value: unknown }[]): Record<
     if (vK !== null && vK > 0) out.kategoriId = vK;
     const vM = toNum(get("markaId"));
     if (vM !== null && vM > 0) out.markaId = vM;
-    const vMat = toNum(get("materyalId"));
-    if (vMat !== null && vMat > 0) out.materyalId = vMat;
+    const vMat = toNum(get("ayarId"));
+    if (vMat !== null && vMat > 0) out.ayarId = vMat;
     const vMinF = toNum(get("minFiyat"));
     if (vMinF !== null && vMinF >= 0) out.minFiyat = vMinF;
     const vMaxF = toNum(get("maxFiyat"));

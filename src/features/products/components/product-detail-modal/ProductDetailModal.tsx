@@ -279,10 +279,10 @@ export function ProductDetailModal({
                                     </div>
                                     <div className="flex justify-between">
                                         <span className="text-muted-foreground">
-                                            Materyal
+                                            Saflık ayarı
                                         </span>
                                         <span className="tabular-nums">
-                                            {modalProduct.materyal?.materyalAdi ?? "—"}
+                                            {modalProduct.ayar?.ayarAdi ?? "—"}
                                         </span>
                                     </div>
                                     <div className="flex justify-between">
@@ -290,8 +290,8 @@ export function ProductDetailModal({
                                             Has Milyem
                                         </span>
                                         <span className="tabular-nums">
-                                            {modalProduct.materyal?.milyemKatsayisi != null
-                                                ? `${modalProduct.materyal.milyemKatsayisi}‰`
+                                            {modalProduct.ayar?.milyemKatsayisi != null
+                                                ? `${modalProduct.ayar.milyemKatsayisi}‰`
                                                 : "—"}
                                         </span>
                                     </div>

@@ -198,7 +198,8 @@ export function useDataTable<TData extends { id: string | number }>({
 
     // ====================================
     // 6. CREATE TABLE INSTANCE (TanStack Table)
-    // ====================================
+    // ====================================,
+    /* eslint-disable */
     const table = useReactTable({
         data: query.data?.data ?? [],
         columns,

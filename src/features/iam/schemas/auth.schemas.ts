@@ -27,6 +27,8 @@ export const nextAuthSchema = z.object({
     roles: z.array(z.string()),
     accessToken: z.string(),
     refreshToken: z.string(),
+    accessTokenExpiresIn: z.number().positive(),
+    refreshTokenExpiresIn: z.number().positive(),
 });
 
 export type LoginFormDTO = z.infer<typeof loginSchema>;

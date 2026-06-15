@@ -64,7 +64,29 @@ export async function POST(request: Request) {
             );
         }
 
-        const { user, accessToken, refreshToken } = responseData.data;
+        const {
+            user,
+            accessToken,
+            refreshToken,
+            accessTokenExpiresIn,
+            refreshTokenExpiresIn,
+        } = responseData.data;
+
+        if (
+            typeof accessTokenExpiresIn !== "number" ||
+            accessTokenExpiresIn <= 0 ||
+            typeof refreshTokenExpiresIn !== "number" ||
+            refreshTokenExpiresIn <= 0
+        ) {
+            return NextResponse.json(
+                {
+                    success: false,
+                    error: "InvalidAuthResponse",
+                    message: "Backend oturum süresi bilgisi eksik",
+                },
+                { status: 502 }
+            );
+        }
 
         const cariObj = {
             id: String(user.cari.id),
@@ -86,7 +108,8 @@ export async function POST(request: Request) {
             ),
             accessToken: String(accessToken),
             refreshToken: String(refreshToken),
-            expiresIn: String(user.expiresIn || 0),
+            accessTokenExpiresIn: String(accessTokenExpiresIn),
+            refreshTokenExpiresIn: String(refreshTokenExpiresIn),
         };
 
         const nextAuthSession = await signIn("credentials", {

@@ -7,16 +7,39 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import type { IProductDTO } from "@/features/products/types";
 import { getMockProductImageUrl } from "@/features/products/lib/mock-product-images";
+import { buildCartLineKey } from "@/features/cart/lib/cart-line-key";
+
+export type ICartItemVariantSelection = {
+    axisLabel: string;
+    valueLabel: string;
+};
+
+export type AddItemOptions = {
+    urunNotu?: string;
+    /** add: sepetteki miktara ekler (varsayılan), set: miktarı doğrudan atar */
+    quantityMode?: "add" | "set";
+    variantSelections?: ICartItemVariantSelection[];
+    birimOrtalamaAgirlikGr?: number;
+};
 
 export interface ICartItem {
+    /** productId + slicer/varianter kombinasyonu */
+    lineKey: string;
     productId: string;
     urunKodu: string;
     urunAdi: string;
     imageUrl?: string;
+    ayarAdi?: string;
     birimAdi: string;
     birimKodu: string;
     kategoriAdi?: string;
     markaAdi?: string;
+    /** Satır bazlı ürün notu */
+    urunNotu?: string;
+    /** Sepete eklenirken seçili slicer / varianter değerleri */
+    variantSelections?: ICartItemVariantSelection[];
+    /** Adet başına ortalama gramaj (sepete ekleme anı) */
+    birimOrtalamaAgirlikGr?: number;
     miktar: number;
     birimFiyat: number;
     kdvOrani: number;
@@ -33,17 +56,29 @@ export interface ICartItem {
 
 interface CartState {
     items: ICartItem[];
+    siparisNotu: string;
 }
 
 interface CartActions {
-    addItem: (product: IProductDTO, miktar?: number, customBirimFiyat?: number) => void;
-    removeItem: (productId: string) => void;
-    updateQuantity: (productId: string, miktar: number) => void;
-    incrementQuantity: (productId: string, amount?: number) => void;
-    decrementQuantity: (productId: string, amount?: number) => void;
+    addItem: (
+        product: IProductDTO,
+        miktar?: number,
+        customBirimFiyat?: number,
+        options?: AddItemOptions
+    ) => void;
+    setSiparisNotu: (not: string) => void;
+    updateItemNote: (lineKey: string, urunNotu: string) => void;
+    removeItem: (lineKey: string) => void;
+    updateQuantity: (lineKey: string, miktar: number) => void;
+    incrementQuantity: (lineKey: string, amount?: number) => void;
+    decrementQuantity: (lineKey: string, amount?: number) => void;
     clearCart: () => void;
     isInCart: (productId: string) => boolean;
     getItemQuantity: (productId: string) => number;
+    findItemByVariant: (
+        productId: string,
+        variantSelections?: ICartItemVariantSelection[]
+    ) => ICartItem | undefined;
 }
 
 function calcTotals(
@@ -64,8 +99,20 @@ function calcTotals(
 function createCartItem(
     product: IProductDTO,
     miktar: number,
-    customBirimFiyat?: number
+    customBirimFiyat?: number,
+    options?: Pick<
+        AddItemOptions,
+        "urunNotu" | "variantSelections" | "birimOrtalamaAgirlikGr"
+    >
 ): ICartItem {
+    const variantSelections =
+        options?.variantSelections && options.variantSelections.length > 0
+            ? options.variantSelections
+            : undefined;
+    const birimOrtalamaAgirlikGr =
+        options?.birimOrtalamaAgirlikGr ??
+        product.ortalamaAgirlik ??
+        product.agirlikGr;
     const birimFiyat =
         customBirimFiyat != null ? customBirimFiyat : (product.satisFiyati ?? 0);
     const kdvOrani = product.kdvOrani ?? 0;
@@ -77,6 +124,7 @@ function createCartItem(
     const resolvedImageUrl = imageUrl ?? getMockProductImageUrl(0);
 
     return {
+        lineKey: buildCartLineKey(product.id, variantSelections),
         productId: product.id,
         urunKodu: product.urunKodu,
         urunAdi: product.urunAdi,
@@ -85,10 +133,14 @@ function createCartItem(
         birimKodu: product.birim?.birimKodu ?? "ADET",
         kategoriAdi: product.kategori?.kategoriAdi,
         markaAdi: product.marka?.markaAdi,
+        ayarAdi: product.ayar?.ayarAdi,
+        urunNotu: options?.urunNotu?.trim() || undefined,
+        variantSelections,
+        birimOrtalamaAgirlikGr,
         miktar,
         birimFiyat,
         kdvOrani,
-        agirlikGr: product.ortalamaAgirlik ?? product.agirlikGr,
+        agirlikGr: birimOrtalamaAgirlikGr,
         hasMilyem: product.hasMilyem,
         iscilikMilyem: product.iscilikMilyem,
         ...totals,
@@ -100,48 +152,92 @@ export const useCartStore = create<CartState & CartActions>()(
     persist(
         (set, get) => ({
             items: [],
+            siparisNotu: "",
 
-            addItem: (product, miktar = 1, customBirimFiyat) => {
+            addItem: (product, miktar = 1, customBirimFiyat, options) => {
+                const quantityMode = options?.quantityMode ?? "add";
+                const trimmedNote = options?.urunNotu?.trim();
+                const variantSelections = options?.variantSelections;
+                const birimOrtalamaAgirlikGr =
+                    options?.birimOrtalamaAgirlikGr ??
+                    product.ortalamaAgirlik ??
+                    product.agirlikGr;
+                const lineKey = buildCartLineKey(product.id, variantSelections);
+
                 set((state) => {
-                    const idx = state.items.findIndex(
-                        (i) => i.productId === product.id
-                    );
+                    const idx = state.items.findIndex((i) => i.lineKey === lineKey);
                     let newItems: ICartItem[];
                     if (idx >= 0) {
                         const item = state.items[idx];
-                        const newMiktar = item.miktar + miktar;
+                        const newMiktar =
+                            quantityMode === "set"
+                                ? miktar
+                                : item.miktar + miktar;
                         const totals = calcTotals(
                             item.birimFiyat,
                             newMiktar,
                             item.kdvOrani
                         );
                         newItems = state.items.map((i, j) =>
-                            j === idx ? { ...i, miktar: newMiktar, ...totals } : i
+                            j === idx
+                                ? {
+                                      ...i,
+                                      miktar: newMiktar,
+                                      ...totals,
+                                      ...(trimmedNote !== undefined
+                                          ? {
+                                                urunNotu: trimmedNote || undefined,
+                                            }
+                                          : {}),
+                                      birimOrtalamaAgirlikGr:
+                                          birimOrtalamaAgirlikGr ??
+                                          i.birimOrtalamaAgirlikGr,
+                                      agirlikGr:
+                                          birimOrtalamaAgirlikGr ?? i.agirlikGr,
+                                  }
+                                : i
                         );
                     } else {
                         newItems = [
                             ...state.items,
-                            createCartItem(product, miktar, customBirimFiyat),
+                            createCartItem(product, miktar, customBirimFiyat, {
+                                urunNotu: trimmedNote,
+                                variantSelections,
+                                birimOrtalamaAgirlikGr,
+                            }),
                         ];
                     }
                     return { items: newItems };
                 });
             },
 
-            removeItem: (productId) => {
+            setSiparisNotu: (not) => set({ siparisNotu: not }),
+
+            updateItemNote: (lineKey, urunNotu) => {
+                const trimmed = urunNotu.trim();
                 set((state) => ({
-                    items: state.items.filter((i) => i.productId !== productId),
+                    items: state.items.map((item) =>
+                        item.lineKey === lineKey
+                            ? { ...item, urunNotu: trimmed || undefined }
+                            : item
+                    ),
                 }));
             },
 
-            updateQuantity: (productId, miktar) => {
+            removeItem: (lineKey) => {
+                set((state) => ({
+                    items: state.items.filter((i) => i.lineKey !== lineKey),
+                }));
+            },
+
+            updateQuantity: (lineKey, miktar) => {
                 if (miktar <= 0) {
-                    get().removeItem(productId);
+                    get().removeItem(lineKey);
                     return;
                 }
                 set((state) => ({
                     items: state.items.map((item) => {
-                        if (item.productId !== productId) return item;
+                        if (item.lineKey !== lineKey) return item;
                         const totals = calcTotals(
                             item.birimFiyat,
                             miktar,
@@ -152,31 +248,55 @@ export const useCartStore = create<CartState & CartActions>()(
                 }));
             },
 
-            incrementQuantity: (productId, amount = 1) => {
-                const item = get().items.find((i) => i.productId === productId);
-                if (item) get().updateQuantity(productId, item.miktar + amount);
+            incrementQuantity: (lineKey, amount = 1) => {
+                const item = get().items.find((i) => i.lineKey === lineKey);
+                if (item) get().updateQuantity(lineKey, item.miktar + amount);
             },
 
-            decrementQuantity: (productId, amount = 1) => {
-                const item = get().items.find((i) => i.productId === productId);
-                if (item) get().updateQuantity(productId, item.miktar - amount);
+            decrementQuantity: (lineKey, amount = 1) => {
+                const item = get().items.find((i) => i.lineKey === lineKey);
+                if (item) get().updateQuantity(lineKey, item.miktar - amount);
             },
 
-            clearCart: () => set({ items: [] }),
+            clearCart: () => set({ items: [], siparisNotu: "" }),
 
             isInCart: (productId) =>
                 get().items.some((i) => i.productId === productId),
 
-            getItemQuantity: (productId) => {
-                const item = get().items.find((i) => i.productId === productId);
-                return item?.miktar ?? 0;
+            getItemQuantity: (productId) =>
+                get()
+                    .items.filter((i) => i.productId === productId)
+                    .reduce((sum, i) => sum + i.miktar, 0),
+
+            findItemByVariant: (productId, variantSelections) => {
+                const lineKey = buildCartLineKey(productId, variantSelections);
+                return get().items.find((i) => i.lineKey === lineKey);
             },
         }),
         {
             name: "gold-erp-portal-cart",
             storage: createJSONStorage(() => localStorage),
-            partialize: (s) => ({ items: s.items }),
-            version: 1,
+            partialize: (s) => ({ items: s.items, siparisNotu: s.siparisNotu }),
+            version: 4,
+            migrate: (persisted, version) => {
+                const state = persisted as CartState & { items?: ICartItem[] };
+                const items = (state.items ?? []).map((item) => ({
+                    ...item,
+                    lineKey:
+                        item.lineKey ??
+                        buildCartLineKey(item.productId, item.variantSelections),
+                    variantSelections: item.variantSelections ?? undefined,
+                    birimOrtalamaAgirlikGr:
+                        item.birimOrtalamaAgirlikGr ?? item.agirlikGr,
+                }));
+                if (version < 4) {
+                    return {
+                        items,
+                        siparisNotu: state.siparisNotu ?? "",
+                    };
+                }
+                return { ...state, items } as CartState;
+            },
         }
     )
 );

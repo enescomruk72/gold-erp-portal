@@ -1,54 +1,43 @@
-import { Metadata } from "next";
-import Link from "next/link";
-import Image from "next/image";
-import { LoginForm } from "@/features/iam/components/login-form";
-import { Card, CardContent } from "@/components/ui/card";
+import { Metadata } from 'next';
+import Link from 'next/link';
+import Image from 'next/image';
+import { LoginForm } from '@/features/iam/components/login-form';
+import { Card, CardContent } from '@/components/ui/card';
 
 export const metadata: Metadata = {
-    title: "Giriş Yap | Gold ERP",
-    description: "ERP Sistemine Giriş",
+    title: 'Giriş Yap | AKBEN B2B Portal',
+    description: 'AKBEN B2B portal hesabınıza giriş yapın.',
 };
 
 export default function LoginPage() {
     return (
-        <div className="grid min-h-svh lg:grid-cols-2">
-            <div className="flex flex-col items-center justify-center gap-4 p-6 md:p-10">
-                <Card className="w-full max-w-md">
-                    <CardContent className="w-full flex flex-col gap-gutter">
-                        <div className="flex flex-col items-center gap-4 text-center">
-                            <Link href="/" className="inline-block">
-                                <Image
-                                    src="/brand-logo.png"
-                                    alt="Gold ERP Logo"
-                                    width={256}
-                                    height={256}
-                                    className="h-20 w-auto object-contain md:h-28"
-                                    priority
-                                />
-                            </Link>
-                            <div className="space-y-1">
-                                <h1 className="text-2xl font-bold tracking-tight">
-                                    Portal Girişi
-                                </h1>
-                                <p className="text-sm text-muted-foreground">
-                                    B2B portal hesabınızla giriş yapın.
-                                </p>
-                            </div>
-                        </div>
-                        <LoginForm />
-                    </CardContent>
-                </Card>
+        <div className="flex min-h-[80vh] flex-1 flex-col items-center justify-center px-gutter py-10 sm:py-14">
+            <div className="mb-base">
+                <Link href="/" className="inline-block" aria-label="AKBEN ana sayfa">
+                    <Image
+                        src="/brand-logo.png"
+                        alt="AKBEN"
+                        width={180}
+                        height={64}
+                        className="h-28 w-auto object-contain md:h-32"
+                        priority
+                    />
+                </Link>
             </div>
-            <div className="bg-muted relative hidden lg:block">
-                <Image
-                    src="/auth-background.jpg"
-                    alt="Image"
-                    width={1000}
-                    height={1000}
-                    className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
-                    priority
-                />
-            </div>
+
+            <Card className="w-full max-w-md border shadow-google-sm py-gutter!">
+                <CardContent className="p-base sm:p-gutter py-0!">
+                    <div className="mb-base space-y-2 text-center">
+                        <h1 className="text-xl font-semibold tracking-tight text-foreground">
+                            Hesabınıza giriş yapın
+                        </h1>
+                        <p className="text-sm text-muted-foreground">
+                            B2B portal hesabınızla devam edin.
+                        </p>
+                    </div>
+                    <LoginForm />
+                </CardContent>
+            </Card>
         </div>
     );
 }
