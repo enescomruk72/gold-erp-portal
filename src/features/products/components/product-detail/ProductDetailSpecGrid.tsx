@@ -29,7 +29,7 @@ export function ProductDetailSpecGrid({
         <div className={cn('grid gap-2', colClass, className)}>
             {rows.map((row) => (
                 <div
-                    key={`${row.label}-${row.value}`}
+                    key={row.label}
                     className="flex items-center justify-between gap-3 rounded-md bg-neutral-100 px-4 py-3 text-sm"
                 >
                     <span className="text-neutral-600">{row.label}</span>

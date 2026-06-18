@@ -22,7 +22,7 @@ export function CartPaymentContractsSection({
     const linked = getCheckoutLinkedSozlesmeler(sozlesmeler);
 
     return (
-        <CartPaymentSectionCard title="Sözleşmeler ve Formlar">
+        <CartPaymentSectionCard title="Sözleşmeler ve Formlar" className='gap-0!'>
             {isLoading ? (
                 <div className="space-y-2">
                     <Skeleton className="h-10 w-full" />
@@ -44,7 +44,7 @@ export function CartPaymentContractsSection({
                                 href={getSozlesmeHref(sozlesme)}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1.5 text-sm font-medium text-[#0b57d0] hover:underline"
+                                className="inline-flex items-center gap-base text-sm font-medium text-[#0b57d0] hover:underline"
                             >
                                 {sozlesme.baslik}
                                 <ExternalLink className="size-3.5 shrink-0 opacity-70" />
