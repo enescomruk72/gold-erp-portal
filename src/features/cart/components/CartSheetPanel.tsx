@@ -15,7 +15,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { useCartStore, useCartTotalQuantity } from '@/features/cart/store';
+import { useCart } from '@/features/cart';
 import { CartWeightDisclaimer } from './CartWeightDisclaimer';
 import { CartItemList } from './CartItemList';
 import { CartOrderSummary } from './CartOrderSummary';
@@ -27,13 +27,15 @@ type CartSheetPanelProps = {
 export function CartSheetPanel({ onGoToCart }: CartSheetPanelProps) {
     const router = useRouter();
     const [clearCartOpen, setClearCartOpen] = useState(false);
-    const items = useCartStore((s) => s.items);
-    const totalQuantity = useCartTotalQuantity();
-    const updateQuantity = useCartStore((s) => s.updateQuantity);
-    const removeItem = useCartStore((s) => s.removeItem);
-    const clearCart = useCartStore((s) => s.clearCart);
-    const siparisNotu = useCartStore((s) => s.siparisNotu);
-    const setSiparisNotu = useCartStore((s) => s.setSiparisNotu);
+    const {
+        items,
+        siparisNotu,
+        updateQuantity,
+        removeItem,
+        clearCart,
+        setSiparisNotu,
+    } = useCart();
+    const totalQuantity = items.reduce((sum, item) => sum + item.miktar, 0);
 
     const handleCheckout = () => {
         if (onGoToCart) onGoToCart();
@@ -109,8 +111,8 @@ export function CartSheetPanel({ onGoToCart }: CartSheetPanelProps) {
                     <AlertDialogFooter>
                         <AlertDialogCancel>Vazgeç</AlertDialogCancel>
                         <AlertDialogAction
-                            onClick={() => {
-                                clearCart();
+                            onClick={async () => {
+                                await clearCart();
                                 setClearCartOpen(false);
                             }}
                             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"

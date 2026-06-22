@@ -2,7 +2,9 @@
 
 import { Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useFavoritesStore } from '@/features/favorites/store/favorites.store';
+import { useFavorites } from '@/features/favorites';
+import { AddToUserCollectionMenu } from '@/features/user-collections';
+import { pdpFavoriteActionClass } from '@/features/products/components/product-detail/product-detail-icon-action';
 import { STOREFRONT_CONTENT_CONTAINER_CLASS } from '@/constants/storefront/layout';
 import {
     PDP_STICKY_BAR_HEIGHT_PX,
@@ -37,8 +39,7 @@ export function ProductDetailStickyBar({
     listingQuery,
     onAddToCart,
 }: ProductDetailStickyBarProps) {
-    const toggleFavorite = useFavoritesStore((s) => s.toggleFavorite);
-    const isFavorite = useFavoritesStore((s) => s.isFavorite);
+    const { toggleFavorite, isFavorite, hasFavoriteAccess } = useFavorites();
 
     const { product } = detail;
     const favorited = isFavorite(product.id);
@@ -106,19 +107,17 @@ export function ProductDetailStickyBar({
                     >
                         Sepete Ekle
                     </Button>
-                    <button
-                        type="button"
-                        aria-label={favorited ? 'Favorilerden çıkar' : 'Favorilere ekle'}
-                        onClick={() => toggleFavorite(product.id)}
-                        className={cn(
-                            'group/favorite flex size-12 shrink-0 border items-center justify-center rounded-full bg-white hover:bg-neutral-100 hover:border-transparent transition-colors',
-                            favorited
-                                ? 'text-rose-500'
-                                : 'text-neutral-600'
-                        )}
-                    >
-                        <Heart className={cn('size-5 group-hover/favorite:text-rose-500', favorited && 'fill-rose-500')} />
-                    </button>
+                    {hasFavoriteAccess ? (
+                        <button
+                            type="button"
+                            aria-label={favorited ? 'Favorilerden çıkar' : 'Favorilere ekle'}
+                            onClick={() => toggleFavorite(product.urunKodu, product.id)}
+                            className={pdpFavoriteActionClass(favorited)}
+                        >
+                            <Heart className={cn('size-5', favorited && 'fill-rose-500')} />
+                        </button>
+                    ) : null}
+                    <AddToUserCollectionMenu urunKodu={product.urunKodu} />
                 </div>
             </div>
         </div>

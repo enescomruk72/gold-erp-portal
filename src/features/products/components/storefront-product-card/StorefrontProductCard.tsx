@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, type ReactNode } from 'react';
 import Link from 'next/link';
-import { Heart, Info } from 'lucide-react';
+import { Heart, Info, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import type { IProductDTO } from '@/features/products/types';
 import { productPublicHref } from '@/features/products/lib/product-href';
@@ -10,7 +10,7 @@ import {
     getProductMiniCategory,
     getProductPrimaryAttributeLabel,
 } from '@/features/products/lib/product-card-meta';
-import { useFavoritesStore } from '@/features/favorites/store/favorites.store';
+import { useFavorites } from '@/features/favorites';
 import { ProductCardGramaj } from './ProductCardGramaj';
 import { cn } from '@/lib/utils';
 
@@ -142,6 +142,11 @@ interface StorefrontProductCardProps {
     linkTarget?: '_blank' | '_self';
     /** Ana sayfa mock kartları — tıklamada yönlendirme yok */
     disableLink?: boolean;
+    /** Sağ üst köşe — favoriler listesi gibi özel aksiyonlar */
+    topActions?: ReactNode;
+    /** Koleksiyon detayında ürünü listeden kaldır */
+    onRemoveFromCollection?: () => void;
+    isRemovePending?: boolean;
 }
 
 export function StorefrontProductCard({
@@ -150,10 +155,12 @@ export function StorefrontProductCard({
     listingQuery,
     linkTarget = '_blank',
     disableLink = false,
+    topActions,
+    onRemoveFromCollection,
+    isRemovePending = false,
 }: StorefrontProductCardProps) {
     const [activeImageIndex, setActiveImageIndex] = useState(0);
-    const toggleFavorite = useFavoritesStore((s) => s.toggleFavorite);
-    const isFavorite = useFavoritesStore((s) => s.isFavorite);
+    const { toggleFavorite, isFavorite, hasFavoriteAccess } = useFavorites();
     const touchStartX = useRef<number | null>(null);
 
     const imageUrls = getCardImageUrls(product);
@@ -199,31 +206,57 @@ export function StorefrontProductCard({
 
     const primaryImageUrl = imageUrls[activeImageIndex] || imageUrls[0];
 
-    const handleToggleFavorite = (e: React.MouseEvent) => {
+    const handleToggleFavorite = async (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
-        toggleFavorite(product.id);
+        if (!hasFavoriteAccess) return;
+        await toggleFavorite(product.urunKodu, product.id);
     };
 
     return (
         <article className="group relative flex h-full flex-col overflow-hidden rounded-lg border border-neutral-200 bg-white transition-shadow hover:shadow-md">
-            <button
-                type="button"
-                aria-label={favorited ? 'Favorilerden çıkar' : 'Favorilere ekle'}
-                onClick={handleToggleFavorite}
-                className={cn(
-                    'absolute right-2 top-2 z-20 flex size-9 items-center justify-center rounded-full bg-white/95 shadow-sm transition-all',
-                    'opacity-0 group-hover:opacity-100',
-                    favorited && 'opacity-100'
-                )}
-            >
-                <Heart
+            {topActions ? (
+                <div
+                    className="absolute right-2 top-2 z-20"
+                    onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    }}
+                >
+                    {topActions}
+                </div>
+            ) : onRemoveFromCollection ? (
+                <button
+                    type="button"
+                    aria-label="Koleksiyondan kaldır"
+                    disabled={isRemovePending}
+                    onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        onRemoveFromCollection();
+                    }}
+                    className="absolute right-2 top-2 z-20 flex size-9 items-center justify-center rounded-full bg-white/95 text-neutral-600 shadow-sm transition-colors hover:bg-white hover:text-neutral-900"
+                >
+                    <X className="size-4" />
+                </button>
+            ) : hasFavoriteAccess ? (
+                <button
+                    type="button"
+                    aria-label={favorited ? 'Favorilerden çıkar' : 'Favorilere ekle'}
+                    onClick={handleToggleFavorite}
                     className={cn(
-                        'size-4 transition-colors',
-                        favorited ? 'fill-rose-500 text-rose-500' : 'text-neutral-600'
+                        'absolute right-2 top-2 z-20 flex size-9 items-center justify-center rounded-full border border-neutral-200 bg-white/95 shadow-sm transition-colors hover:bg-white',
+                        favorited ? 'text-rose-500' : 'text-neutral-600',
                     )}
-                />
-            </button>
+                >
+                    <Heart
+                        className={cn(
+                            'size-4 transition-colors',
+                            favorited ? 'fill-rose-500 text-rose-500' : 'text-neutral-600',
+                        )}
+                    />
+                </button>
+            ) : null}
 
             {disableLink ? (
                 <div className="flex flex-1 flex-col">

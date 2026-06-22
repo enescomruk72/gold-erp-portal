@@ -5,7 +5,7 @@ import { useMemo, type RefObject } from 'react';
 import { useRouter } from 'next/navigation';
 import { Heart } from 'lucide-react';
 import { Button, buttonVariants } from '@/components/ui/button';
-import { useFavoritesStore } from '@/features/favorites/store/favorites.store';
+import { useFavorites } from '@/features/favorites';
 import { buildProductDetailQueryString, productPublicHref } from '@/features/products/lib/product-href';
 import {
     getProductMiniCategory,
@@ -14,8 +14,10 @@ import {
 import type { ProductDetailDTO } from '@/features/products/types/product-detail.types';
 import { ProductDetailSocialProof } from './ProductDetailSocialProof';
 import { ProductDetailSpecGrid } from './ProductDetailSpecGrid';
-import { cn } from '@/lib/utils';
+import { AddToUserCollectionMenu } from '@/features/user-collections';
+import { pdpFavoriteActionClass } from '@/features/products/components/product-detail/product-detail-icon-action';
 import { Separator } from '@/components/ui/separator';
+import { cn } from '@/lib/utils';
 
 type ProductDetailInfoProps = {
     detail: ProductDetailDTO;
@@ -37,8 +39,7 @@ export function ProductDetailInfo({
     onAddToCart,
 }: ProductDetailInfoProps) {
     const router = useRouter();
-    const toggleFavorite = useFavoritesStore((s) => s.toggleFavorite);
-    const isFavorite = useFavoritesStore((s) => s.isFavorite);
+    const { toggleFavorite, isFavorite, hasFavoriteAccess } = useFavorites();
 
     const { product, slicerAxes, varianterAxes } = detail;
     const favorited = isFavorite(product.id);
@@ -207,7 +208,7 @@ export function ProductDetailInfo({
                 })}
             </div>
 
-            <div ref={purchaseSectionRef} className="flex gap-base">
+            <div ref={purchaseSectionRef} className="flex items-center gap-2">
                 <Button
                     type="button"
                     className="h-12 flex-1 bg-[#0b57d0] text-base font-semibold hover:bg-[#0b57d0]/90"
@@ -215,19 +216,17 @@ export function ProductDetailInfo({
                 >
                     Sepete Ekle
                 </Button>
-                <button
-                    type="button"
-                    aria-label={favorited ? 'Favorilerden çıkar' : 'Favorilere ekle'}
-                    onClick={() => toggleFavorite(product.id)}
-                    className={cn(
-                        'group/favorite flex size-12 shrink-0 border items-center justify-center rounded-full bg-white hover:bg-neutral-100 hover:border-transparent transition-colors',
-                        favorited
-                            ? 'text-rose-500'
-                            : 'text-neutral-600'
-                    )}
-                >
-                    <Heart className={cn('size-5 group-hover/favorite:text-rose-500', favorited && 'fill-rose-500')} />
-                </button>
+                {hasFavoriteAccess ? (
+                    <button
+                        type="button"
+                        aria-label={favorited ? 'Favorilerden çıkar' : 'Favorilere ekle'}
+                        onClick={() => toggleFavorite(product.urunKodu, product.id)}
+                        className={pdpFavoriteActionClass(favorited)}
+                    >
+                        <Heart className={cn('size-5', favorited && 'fill-rose-500')} />
+                    </button>
+                ) : null}
+                <AddToUserCollectionMenu urunKodu={product.urunKodu} />
             </div>
         </div>
     );

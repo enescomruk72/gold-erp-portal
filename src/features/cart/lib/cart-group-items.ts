@@ -1,4 +1,4 @@
-import type { ICartItem, ICartItemVariantSelection } from '@/features/cart/store/cart.store';
+import type { ICartItem, ICartItemVariantSelection } from '@/features/cart/store/cart.types';
 
 export type CartDisplayGroup = {
     groupKey: string;

@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import type { IProductDTO } from "@/features/products/types";
-import { useCartStore } from "@/features/cart";
+import { useCart } from "@/features/cart";
 import { cn } from "@/lib/utils";
 
 interface ProductCardProps {
@@ -30,9 +30,7 @@ export function ProductCard({
     onDetailClick,
 }: ProductCardProps) {
     const [activeImageIndex, setActiveImageIndex] = useState(0);
-    const addItem = useCartStore((s) => s.addItem);
-    const isInCart = useCartStore((s) => s.isInCart);
-    const getItemQuantity = useCartStore((s) => s.getItemQuantity);
+    const { addItem, isInCart, getItemQuantity, hasCartAccess } = useCart();
     const touchStartX = useRef<number | null>(null);
 
     const imageUrls = getCardImageUrls(product);
@@ -76,9 +74,10 @@ export function ProductCard({
 
     const primaryImageUrl = imageUrls[activeImageIndex] || imageUrls[0];
 
-    const handleQuickAdd = (e: React.MouseEvent) => {
+    const handleQuickAdd = async (e: React.MouseEvent) => {
         e.stopPropagation();
-        addItem(product, 1);
+        if (!hasCartAccess) return;
+        await addItem(product, 1);
     };
 
     const inCart = isInCart(product.id);
@@ -94,16 +93,17 @@ export function ProductCard({
             className="group relative cursor-pointer overflow-hidden rounded-xl py-0 transition-all duration-200 ease-out hover:scale-[1.02] hover:shadow-lg"
             onClick={() => onDetailClick?.(product)}
         >
-            {/* Hızlı sepete ekle butonu */}
-            <Button
-                variant="secondary"
-                size="icon"
-                className="absolute right-2 top-2 z-10 size-9 rounded-full opacity-0 shadow-md transition-opacity group-hover:opacity-100"
-                onClick={handleQuickAdd}
-                title="Sepete ekle"
-            >
-                <ShoppingCart className="size-4" />
-            </Button>
+            {hasCartAccess ? (
+                <Button
+                    variant="secondary"
+                    size="icon"
+                    className="absolute right-2 top-2 z-10 size-9 rounded-full opacity-0 shadow-md transition-opacity group-hover:opacity-100"
+                    onClick={handleQuickAdd}
+                    title="Sepete ekle"
+                >
+                    <ShoppingCart className="size-4" />
+                </Button>
+            ) : null}
             {(product.marka?.markaAdi || inCart) && (
                 <div className="absolute left-2 top-2 z-10 flex max-w-[calc(100%-4rem)] flex-col items-start gap-1">
                     {product.marka?.markaAdi ? (

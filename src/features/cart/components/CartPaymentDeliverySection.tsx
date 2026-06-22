@@ -68,7 +68,7 @@ export function CartPaymentDeliverySection({
                                 : 'border-neutral-200',
                         )}
                     >
-                        <div className="flex items-start gap-3">
+                        <div className="flex items-start gap-base">
                             <RadioGroupItem value="adres" id="teslimat-adres" className="mt-1" />
                             <div className="min-w-0 flex-1 space-y-3">
                                 <Label
@@ -89,7 +89,7 @@ export function CartPaymentDeliverySection({
 
                                 {value === 'adres' ? (
                                     <div className="space-y-3">
-                                        <div className="flex items-center justify-between gap-3">
+                                        <div className="flex items-center justify-between gap-base">
                                             <p className="text-sm font-semibold text-neutral-800">
                                                 Teslimat Adresi
                                             </p>
@@ -145,7 +145,7 @@ export function CartPaymentDeliverySection({
                                 : 'border-neutral-200',
                         )}
                     >
-                        <div className="flex items-start gap-3">
+                        <div className="flex items-start gap-base">
                             <RadioGroupItem value="magaza" id="teslimat-magaza" className="mt-1" />
                             <div className="min-w-0 flex-1 space-y-2">
                                 <Label

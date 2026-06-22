@@ -4,7 +4,7 @@ import { SendHorizonal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { CartCollapsibleNoteField } from './CartCollapsibleNoteField';
-import type { ICartItem } from '@/features/cart/store/cart.store';
+import type { ICartItem } from '@/features/cart/store/cart.types';
 import {
     formatCartGr,
     getTahminiToplamAgirlikGr,

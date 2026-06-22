@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { ChevronLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { useCartStore, useCartTotalQuantity } from '@/features/cart';
+import { useCart } from '@/features/cart';
 import { CartPaymentProductsSection } from '@/features/cart/components/CartPaymentProductsSection';
 import {
     CartPaymentDeliverySection,
@@ -21,10 +21,8 @@ import { useGetPublicAyarlar } from '@/features/settings';
 
 export default function CartPaymentPage() {
     const router = useRouter();
-    const items = useCartStore((s) => s.items);
-    const siparisNotu = useCartStore((s) => s.siparisNotu);
-    const totalQuantity = useCartTotalQuantity();
-    const clearCart = useCartStore((s) => s.clearCart);
+    const { items, siparisNotu, clearCart } = useCart();
+    const totalQuantity = items.reduce((sum, item) => sum + item.miktar, 0);
 
     const selectedAddressId = useDeliveryAddressStore((s) => s.selectedAddressId);
     const createOrder = useCreateOrder();
@@ -78,9 +76,16 @@ export default function CartPaymentPage() {
         }
 
         try {
+            const missingVaryant = items.some((item) => !item.varyantId);
+            if (missingVaryant) {
+                toast.error('Sepette varyant bilgisi eksik ürün var. Lütfen sepeti güncelleyin.');
+                return;
+            }
+
             await createOrder.mutateAsync({
                 urunler: items.map((item) => ({
                     urunId: item.productId,
+                    varyantId: item.varyantId!,
                     miktar: item.miktar,
                     ...(item.urunNotu ? { aciklama: item.urunNotu } : {}),
                 })),
@@ -89,7 +94,7 @@ export default function CartPaymentPage() {
                     : {}),
                 ...(siparisNotu.trim() ? { notlar: siparisNotu.trim() } : {}),
             });
-            clearCart();
+            await clearCart();
             toast.success('Siparişiniz alındı');
             router.push('/orders');
         } catch {

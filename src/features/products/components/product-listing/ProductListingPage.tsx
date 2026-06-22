@@ -145,7 +145,7 @@ export function ProductListingPage() {
                                 Bu filtrelere uygun ürün bulunamadı.
                             </div>
                         ) : (
-                            <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-2 md:grid-cols-3 md:gap-5 lg:grid-cols-3">
+                            <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-2 md:grid-cols-3 md:gap-5 lg:grid-cols-3 xl:grid-cols-4">
                                 {products.map((product) => (
                                     <StorefrontProductCard
                                         key={product.id}

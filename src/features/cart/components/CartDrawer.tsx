@@ -12,17 +12,18 @@ import {
     SheetTitle,
     SheetTrigger,
 } from "@/components/ui/sheet";
-import { useCartTotalQuantity } from "@/features/cart/store";
-import { useCartStore } from "@/features/cart/store/cart.store";
+import { useCart } from "@/features/cart";
 import { getCartGroupCount } from "@/features/cart/lib/cart-group-items";
 import { CartSheetPanel } from "./CartSheetPanel";
 
 export function CartDrawer() {
     const router = useRouter();
-    const items = useCartStore((s) => s.items);
-    const totalQuantity = useCartTotalQuantity();
+    const { items, hasCartAccess } = useCart();
+    const totalQuantity = items.reduce((sum, item) => sum + item.miktar, 0);
     const isEmpty = items.length === 0;
     const groupCount = getCartGroupCount(items);
+
+    if (!hasCartAccess) return null;
 
     return (
         <Sheet>

@@ -10,7 +10,7 @@ import {
     AccordionTrigger,
 } from '@/components/ui/accordion';
 import { CartCollapsibleNoteField } from './CartCollapsibleNoteField';
-import type { ICartItem } from '@/features/cart/store/cart.store';
+import type { ICartItem } from '@/features/cart/store/cart.types';
 import {
     extractSlicerSelections,
     getVarianterSelectionsForLine,
@@ -82,7 +82,7 @@ function GroupSummary({
                     compact ? 'text-[10px]' : 'text-xs'
                 )}
             >
-                ~{formatCartGr(totalWeight)} gr
+                ≈&nbsp;{formatCartGr(totalWeight)} gr
             </p>
         </div>
     );
@@ -350,7 +350,7 @@ export function CartProductGroupCard({
                                         : 'bottom-0.5 right-0.5 px-1.5 py-0.5 text-[10px]'
                                 )}
                             >
-                                ~{formatCartGr(birimGr)} gr
+                                ≈&nbsp;{formatCartGr(birimGr)} gr
                             </span>
                         ) : null}
                     </div>

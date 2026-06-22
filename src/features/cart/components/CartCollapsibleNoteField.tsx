@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -16,6 +16,8 @@ type CartCollapsibleNoteFieldProps = {
     placeholder?: string;
     rows?: number;
     className?: string;
+    /** API'ye yazmadan önce bekleme süresi (ms). 0 = anında. */
+    commitDelayMs?: number;
 };
 
 export function CartCollapsibleNoteField({
@@ -27,17 +29,42 @@ export function CartCollapsibleNoteField({
     placeholder,
     rows = 3,
     className,
+    commitDelayMs = 500,
 }: CartCollapsibleNoteFieldProps) {
     const [open, setOpen] = useState(() => value.trim().length > 0);
+    const [draft, setDraft] = useState(value);
+    const commitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     useEffect(() => {
-        const timeout = setTimeout(() => {
-            if (value.trim().length > 0) {
-                setOpen(true);
-            }
-        }, 100);
-        return () => clearTimeout(timeout);
+        setDraft(value);
     }, [value]);
+
+    useEffect(() => {
+        if (value.trim().length > 0) {
+            setOpen(true);
+        }
+    }, [value]);
+
+    useEffect(
+        () => () => {
+            if (commitTimerRef.current) clearTimeout(commitTimerRef.current);
+        },
+        [],
+    );
+
+    const scheduleCommit = (next: string) => {
+        if (commitTimerRef.current) clearTimeout(commitTimerRef.current);
+        if (commitDelayMs <= 0) {
+            onChange(next);
+            return;
+        }
+        commitTimerRef.current = setTimeout(() => onChange(next), commitDelayMs);
+    };
+
+    const handleDraftChange = (next: string) => {
+        setDraft(next);
+        scheduleCommit(next);
+    };
 
     if (!open) {
         return (
@@ -61,8 +88,8 @@ export function CartCollapsibleNoteField({
             </Label>
             <Textarea
                 id={id}
-                value={value}
-                onChange={(e) => onChange(e.target.value)}
+                value={draft}
+                onChange={(e) => handleDraftChange(e.target.value)}
                 placeholder={placeholder}
                 rows={rows}
                 className="min-h-0 resize-none text-sm"

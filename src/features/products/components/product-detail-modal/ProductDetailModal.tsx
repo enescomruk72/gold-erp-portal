@@ -20,7 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { IProductDTO } from "@/features/products/types";
 import { useGetProduct } from "@/features/products/api/use-get-product";
-import { useCartStore } from "@/features/cart";
+import { useCart } from "@/features/cart";
 import { cn } from "@/lib/utils";
 import { ProductImageGallery } from "./ProductImageGallery";
 
@@ -49,7 +49,7 @@ export function ProductDetailModal({
 }: ProductDetailModalProps) {
     const productDetailQuery = useGetProduct(product?.id ?? null, open);
     const modalProduct = (productDetailQuery.data?.data ?? null) as IProductDTO | null;
-    const { addItem, isInCart, getItemQuantity } = useCartStore();
+    const { addItem, isInCart, getItemQuantity, hasCartAccess } = useCart();
     const [quantity, setQuantity] = useState(1);
     const [isAdding, setIsAdding] = useState(false);
 
@@ -96,9 +96,10 @@ export function ProductDetailModal({
     }
 
     const handleAddToCart = async () => {
+        if (!hasCartAccess) return;
         setIsAdding(true);
         try {
-            addItem(modalProduct, quantity, birimFiyat);
+            await addItem(modalProduct, quantity, birimFiyat);
             await new Promise((r) => setTimeout(r, 300));
         } finally {
             setIsAdding(false);

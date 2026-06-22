@@ -3,10 +3,13 @@
 import Link from "next/link";
 import { ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useCartTotalQuantity } from "@/features/cart/store";
+import { useCart } from "@/features/cart";
 
 export function CartButton() {
-    const totalQuantity = useCartTotalQuantity();
+    const { items, hasCartAccess } = useCart();
+    const totalQuantity = items.reduce((sum, item) => sum + item.miktar, 0);
+
+    if (!hasCartAccess) return null;
 
     return (
         <Button variant="ghost" size="icon" asChild className="relative">

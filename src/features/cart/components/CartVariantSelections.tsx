@@ -1,4 +1,4 @@
-import type { ICartItemVariantSelection } from '@/features/cart/store/cart.store';
+import type { ICartItemVariantSelection } from '@/features/cart/store/cart.types';
 
 type CartVariantSelectionsProps = {
     selections: ICartItemVariantSelection[];

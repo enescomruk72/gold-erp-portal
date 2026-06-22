@@ -194,6 +194,7 @@ export function ProductDetailPage() {
             <ProductAddToCartModal
                 product={detail.product}
                 variantSelections={addToCartVariantSelections}
+                varyantId={detail.selectedVariantId}
                 unitAverageWeightGr={addToCartUnitWeightGr}
                 open={addToCartOpen}
                 onOpenChange={setAddToCartOpen}

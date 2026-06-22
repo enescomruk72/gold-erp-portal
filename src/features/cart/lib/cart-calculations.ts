@@ -1,4 +1,4 @@
-import type { ICartItem } from '@/features/cart/store/cart.store';
+import type { ICartItem } from '@/features/cart/store/cart.types';
 
 export function formatCartGr(value: number): string {
     return value.toLocaleString('tr-TR', {

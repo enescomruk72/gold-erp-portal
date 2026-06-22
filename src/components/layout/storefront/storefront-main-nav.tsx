@@ -2,12 +2,11 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { Heart } from 'lucide-react';
 import type { User } from 'next-auth';
 import { StorefrontContainer } from './storefront-container';
 import { StorefrontSearchDialog } from './storefront-search-dialog';
 import { StorefrontAccountMenu } from './storefront-account-menu';
-import { StorefrontNavAction } from './storefront-nav-action';
+import { StorefrontFavoritesNav } from './storefront-favorites-nav';
 import { StorefrontCartNav } from './storefront-cart-nav';
 
 type StorefrontMainNavProps = {
@@ -38,11 +37,7 @@ export function StorefrontMainNav({ user }: StorefrontMainNavProps) {
 
                 <div className="ml-auto flex items-center gap-1 sm:gap-2">
                     <StorefrontAccountMenu user={user} />
-                    <StorefrontNavAction
-                        href="/favorites"
-                        label="Favorilerim"
-                        icon={<Heart className="size-5" />}
-                    />
+                    <StorefrontFavoritesNav />
                     <StorefrontCartNav />
                 </div>
             </StorefrontContainer>

@@ -1,4 +1,4 @@
-import type { ICartItemVariantSelection } from '@/features/cart/store/cart.store';
+import type { ICartItemVariantSelection } from '@/features/cart/store/cart.types';
 
 export function normalizeVariantSelections(
     selections?: ICartItemVariantSelection[] | null,

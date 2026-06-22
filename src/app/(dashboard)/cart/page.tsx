@@ -2,12 +2,9 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ShoppingCart } from "lucide-react";
+import { Loader2, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-    useCartStore,
-    useCartTotalQuantity,
-} from "@/features/cart";
+import { useCart } from "@/features/cart";
 import { CartWeightDisclaimer } from "@/features/cart/components/CartWeightDisclaimer";
 import { CartItemList } from "@/features/cart/components/CartItemList";
 import { CartOrderSummary } from "@/features/cart/components/CartOrderSummary";
@@ -15,14 +12,37 @@ import { getCartGroupCount } from "@/features/cart/lib/cart-group-items";
 
 export default function CartPage() {
     const router = useRouter();
-    const items = useCartStore((s) => s.items);
-    const totalQuantity = useCartTotalQuantity();
-    const updateQuantity = useCartStore((s) => s.updateQuantity);
-    const removeItem = useCartStore((s) => s.removeItem);
-    const updateItemNote = useCartStore((s) => s.updateItemNote);
-    const siparisNotu = useCartStore((s) => s.siparisNotu);
-    const setSiparisNotu = useCartStore((s) => s.setSiparisNotu);
+    const {
+        items,
+        siparisNotu,
+        isLoading,
+        hasCartAccess,
+        updateQuantity,
+        removeItem,
+        updateItemNote,
+        setSiparisNotu,
+    } = useCart();
+    const totalQuantity = items.reduce((sum, item) => sum + item.miktar, 0);
     const displayGroupCount = getCartGroupCount(items);
+
+    if (!hasCartAccess) {
+        return (
+            <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 px-4 py-20">
+                <p className="text-muted-foreground">Sepet erişiminiz bulunmuyor.</p>
+                <Button asChild variant="outline">
+                    <Link href="/products">Ürünlere Git</Link>
+                </Button>
+            </div>
+        );
+    }
+
+    if (isLoading) {
+        return (
+            <div className="flex min-h-[60vh] items-center justify-center">
+                <Loader2 className="size-8 animate-spin text-muted-foreground" />
+            </div>
+        );
+    }
 
     if (items.length === 0) {
         return (

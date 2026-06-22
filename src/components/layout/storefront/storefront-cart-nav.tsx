@@ -11,14 +11,16 @@ import {
     SheetTitle,
     SheetTrigger,
 } from '@/components/ui/sheet';
-import { useCartStore, useCartTotalQuantity } from '@/features/cart/store';
+import { useCart } from '@/features/cart';
 import { CartSheetPanel } from '@/features/cart/components/CartSheetPanel';
 import { cn } from '@/lib/utils';
 
 export function StorefrontCartNav({ className }: { className?: string }) {
-    const items = useCartStore((s) => s.items);
-    const totalQuantity = useCartTotalQuantity();
+    const { items, hasCartAccess } = useCart();
+    const totalQuantity = items.reduce((sum, item) => sum + item.miktar, 0);
     const isEmpty = items.length === 0;
+
+    if (!hasCartAccess) return null;
 
     return (
         <Sheet>

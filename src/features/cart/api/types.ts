@@ -28,7 +28,12 @@ export type CreateB2bAdresInput = {
 export type UpdateB2bAdresInput = Partial<CreateB2bAdresInput>;
 
 export type CreateB2bOrderInput = {
-    urunler: Array<{ urunId: string; miktar: number; aciklama?: string }>;
+    urunler: Array<{
+        urunId: string;
+        varyantId: string;
+        miktar: number;
+        aciklama?: string;
+    }>;
     teslimatAdresId?: string;
     notlar?: string;
 };

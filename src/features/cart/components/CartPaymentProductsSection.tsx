@@ -1,6 +1,6 @@
 'use client';
 
-import type { ICartItem } from '@/features/cart/store/cart.store';
+import type { ICartItem } from '@/features/cart/store/cart.types';
 import { getCartItemImageUrl } from '@/features/cart/lib/mock-cart-image';
 import { CartWeightDisclaimer } from './CartWeightDisclaimer';
 import { CartItemList } from './CartItemList';

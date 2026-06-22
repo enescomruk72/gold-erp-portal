@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { Minus, Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { CartCollapsibleNoteField } from './CartCollapsibleNoteField';
-import type { ICartItem } from '@/features/cart/store/cart.store';
+import type { ICartItem } from '@/features/cart/store/cart.types';
 import { getCartItemImageUrl } from '@/features/cart/lib/mock-cart-image';
 import {
     formatCartGr,
@@ -214,7 +214,7 @@ export function CartLineItem({
                     />
                     {birimGr > 0 ? (
                         <span className="absolute bottom-0.5 right-0.5 rounded bg-primary px-1.5 py-0.5 text-[10px] font-medium text-primary-foreground">
-                            ≌ {formatCartGr(birimGr)} gr
+                            ≈&nbsp;{formatCartGr(birimGr)} gr
                         </span>
                     ) : null}
                 </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import type { ICartItem } from '@/features/cart/store/cart.store';
+import type { ICartItem } from '@/features/cart/store/cart.types';
 import { groupCartItemsBySlicer, isSimpleCartLine } from '@/features/cart/lib/cart-group-items';
 import { CartLineItem } from './CartLineItem';
 import { CartProductGroupCard } from './CartProductGroupCard';

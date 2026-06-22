@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
-import { CheckCircle2, Loader2, Minus, Plus, ShoppingCart } from 'lucide-react';
+import { CheckCircle2, AlertCircle, Loader2, Minus, Plus, ShoppingCart } from 'lucide-react';
 import {
     Dialog,
     DialogContent,
@@ -14,16 +14,18 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { buildCartLineKey } from '@/features/cart/lib/cart-line-key';
-import { useCartStore } from '@/features/cart/store/cart.store';
-import type { ICartItem } from '@/features/cart/store/cart.store';
+import { useCart } from '@/features/cart/hooks/use-cart';
+import type { ICartItem } from '@/features/cart/store/cart.types';
 import type { IProductDTO } from '@/features/products/types';
 import type { VariantSelectionRow } from '@/features/products/lib/product-detail-variant-summary';
 import { getMockProductImageUrl } from '@/features/products/lib/mock-product-images';
 import { cn } from '@/lib/utils';
+import { ApiClientError } from '@/lib/api/errors';
 
 type ProductAddToCartModalProps = {
     product: IProductDTO | null;
     variantSelections?: VariantSelectionRow[];
+    varyantId?: string;
     unitAverageWeightGr?: number;
     open: boolean;
     onOpenChange: (open: boolean) => void;
@@ -31,8 +33,22 @@ type ProductAddToCartModalProps = {
 
 const SUBMIT_DELAY_MS = 750;
 const SUCCESS_DISPLAY_MS = 2200;
+const ERROR_DISPLAY_MS = 4000;
 
-type SubmitPhase = 'idle' | 'loading' | 'success';
+type SubmitPhase = 'idle' | 'loading' | 'success' | 'error';
+
+function resolveAddToCartErrorMessage(error: unknown): string {
+    if (error instanceof ApiClientError) {
+        if (error.statusCode === 409) {
+            return 'Bu ürün sepetinizde zaten var veya daha önce eklenmişti. Lütfen tekrar deneyin.';
+        }
+        return error.message || 'Ürün sepete eklenemedi.';
+    }
+    if (error instanceof Error && error.message) {
+        return error.message;
+    }
+    return 'Ürün sepete eklenirken bir hata oluştu. Lütfen tekrar deneyin.';
+}
 
 function formatGr(value: number): string {
     return value.toLocaleString('tr-TR', {
@@ -53,6 +69,7 @@ type ProductAddToCartModalBodyProps = {
     product: IProductDTO;
     cartItem?: ICartItem;
     variantSelections: VariantSelectionRow[];
+    varyantId?: string;
     unitAverageWeightGr?: number;
     onOpenChange: (open: boolean) => void;
     onBusyChange: (busy: boolean) => void;
@@ -62,18 +79,21 @@ function ProductAddToCartModalBody({
     product,
     cartItem,
     variantSelections,
+    varyantId,
     unitAverageWeightGr,
     onOpenChange,
     onBusyChange,
 }: ProductAddToCartModalBodyProps) {
-    const addItem = useCartStore((s) => s.addItem);
+    const { addItem } = useCart();
 
     const [quantity, setQuantity] = useState(() => cartItem?.miktar ?? 1);
     const [urunNotu, setUrunNotu] = useState(() => cartItem?.urunNotu ?? '');
     const [submitPhase, setSubmitPhase] = useState<SubmitPhase>('idle');
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     const isSubmitting = submitPhase === 'loading';
     const isSuccess = submitPhase === 'success';
+    const isError = submitPhase === 'error';
     const isBusy = isSubmitting || isSuccess;
 
     useEffect(() => {
@@ -85,6 +105,15 @@ function ProductAddToCartModalBody({
         const timer = setTimeout(() => onOpenChange(false), SUCCESS_DISPLAY_MS);
         return () => clearTimeout(timer);
     }, [isSuccess, onOpenChange]);
+
+    useEffect(() => {
+        if (!isError) return;
+        const timer = setTimeout(() => {
+            setSubmitPhase('idle');
+            setErrorMessage(null);
+        }, ERROR_DISPLAY_MS);
+        return () => clearTimeout(timer);
+    }, [isError]);
 
     const birimOrtalamaGr =
         unitAverageWeightGr ??
@@ -101,20 +130,23 @@ function ProductAddToCartModalBody({
 
     const handleSubmit = async () => {
         if (quantity < 1 || submitPhase !== 'idle') return;
+        setErrorMessage(null);
         setSubmitPhase('loading');
         try {
             await new Promise<void>((resolve) => {
                 setTimeout(resolve, SUBMIT_DELAY_MS);
             });
-            addItem(product, quantity, undefined, {
+            await addItem(product, quantity, undefined, {
                 urunNotu,
                 quantityMode: 'set',
                 variantSelections,
+                ...(varyantId ? { varyantId } : {}),
                 birimOrtalamaAgirlikGr: birimOrtalamaGr,
             });
             setSubmitPhase('success');
-        } catch {
-            setSubmitPhase('idle');
+        } catch (error) {
+            setErrorMessage(resolveAddToCartErrorMessage(error));
+            setSubmitPhase('error');
         }
     };
 
@@ -132,6 +164,24 @@ function ProductAddToCartModalBody({
                     <p className="text-center text-sm text-emerald-50">
                         {quantity} adet ürün sepetinize kaydedildi
                     </p>
+                </div>
+            ) : null}
+            {isError ? (
+                <div
+                    className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-destructive px-6 text-white animate-in fade-in duration-300"
+                    role="alert"
+                    aria-live="assertive"
+                    onClick={() => {
+                        setSubmitPhase('idle');
+                        setErrorMessage(null);
+                    }}
+                >
+                    <AlertCircle className="size-14 stroke-[1.5]" />
+                    <p className="text-lg font-semibold">Sepete eklenemedi</p>
+                    <p className="text-center text-sm text-red-50">
+                        {errorMessage ?? 'Bir hata oluştu. Lütfen tekrar deneyin.'}
+                    </p>
+                    <p className="text-center text-xs text-red-100/90">Kapatmak için tıklayın</p>
                 </div>
             ) : null}
             <DialogHeader className="border-b border-neutral-200 px-5 py-4">
@@ -297,15 +347,15 @@ function ProductAddToCartModalBody({
 export function ProductAddToCartModal({
     product,
     variantSelections = [],
+    varyantId,
     unitAverageWeightGr,
     open,
     onOpenChange,
 }: ProductAddToCartModalProps) {
-    const cartItem = useCartStore((s) =>
-        product
-            ? s.findItemByVariant(product.id, variantSelections)
-            : undefined
-    );
+    const { findItemByVariant } = useCart();
+    const cartItem = product
+        ? findItemByVariant(product.id, variantSelections, varyantId)
+        : undefined;
     const isSubmittingRef = useRef(false);
 
     const handleBusyChange = useCallback((submitting: boolean) => {
@@ -343,6 +393,7 @@ export function ProductAddToCartModal({
                         product={product}
                         cartItem={cartItem}
                         variantSelections={variantSelections}
+                        varyantId={varyantId}
                         unitAverageWeightGr={unitAverageWeightGr}
                         onOpenChange={handleOpenChange}
                         onBusyChange={handleBusyChange}
