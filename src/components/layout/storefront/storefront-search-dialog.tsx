@@ -35,6 +35,10 @@ export function StorefrontSearchDialog({ className }: StorefrontSearchDialogProp
     const [open, setOpen] = React.useState(false);
     const [query, setQuery] = React.useState('');
     const inputRef = React.useRef<HTMLInputElement>(null);
+    const anchorRef = React.useRef<HTMLDivElement>(null);
+
+    const isWithinAnchor = (target: EventTarget | null) =>
+        target instanceof Node && anchorRef.current?.contains(target);
 
     React.useEffect(() => {
         if (open) {
@@ -48,11 +52,27 @@ export function StorefrontSearchDialog({ className }: StorefrontSearchDialogProp
         inputRef.current?.focus();
     };
 
+    const handleOpenChange = (next: boolean) => {
+        setOpen(next);
+        if (!next) {
+            window.requestAnimationFrame(() => inputRef.current?.blur());
+        }
+    };
+
+    const handleAnchorActivate = () => {
+        setOpen(true);
+        inputRef.current?.focus();
+    };
+
     return (
-        <Popover open={open} onOpenChange={setOpen} modal={false}>
+        <Popover open={open} onOpenChange={handleOpenChange} modal={false}>
             <div className={cn('relative w-full max-w-3xl', className)}>
                 <PopoverAnchor asChild>
                     <div
+                        ref={anchorRef}
+                        onPointerDown={() => {
+                            if (!open) handleAnchorActivate();
+                        }}
                         className={cn(
                             'relative flex h-12 w-full items-center gap-2 rounded-md border border-transparent bg-muted px-3 transition-[box-shadow,border-color,border-radius]',
                             open && cn(accentRing, 'rounded-b-none border-b-0')
@@ -68,6 +88,9 @@ export function StorefrontSearchDialog({ className }: StorefrontSearchDialogProp
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
                             onFocus={() => setOpen(true)}
+                            onClick={() => {
+                                if (!open) handleAnchorActivate();
+                            }}
                             placeholder="Ürün, kategori veya ürün kodu ara"
                             className="h-full border-0 bg-transparent! px-0 text-base shadow-none focus-visible:ring-0"
                         />
@@ -79,6 +102,12 @@ export function StorefrontSearchDialog({ className }: StorefrontSearchDialogProp
                     align="start"
                     sideOffset={0}
                     onOpenAutoFocus={(e) => e.preventDefault()}
+                    onPointerDownOutside={(e) => {
+                        if (isWithinAnchor(e.target)) e.preventDefault();
+                    }}
+                    onFocusOutside={(e) => {
+                        if (isWithinAnchor(e.target)) e.preventDefault();
+                    }}
                     className={cn(
                         'w-(--radix-popover-trigger-width) max-h-[min(70vh,520px)] overflow-y-auto rounded-t-none rounded-b-md border-2 border-t-0 p-0 shadow-md',
                         accentRing
