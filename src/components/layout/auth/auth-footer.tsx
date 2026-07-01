@@ -17,16 +17,12 @@ const footerColumns: { title: string; links: FooterLink[] }[] = [
         title: 'Satıcı',
         links: [
             { label: "Akben'de B2B Başvurusu", href: '/b2b-basvuru' },
-            { label: 'Akben Akademi', href: '/akben-akademi' },
-            { label: 'Temel Kavramlar', href: '/temel-kavramlar' },
         ],
     },
     {
         title: 'Yardım',
         links: [
             { label: 'Sıkça Sorulan Sorular', href: '/sss' },
-            { label: 'Canlı Yardım', href: '/canli-yardim' },
-            { label: 'İşlem Rehberi', href: '/islem-rehberi' },
         ],
     },
 ];
