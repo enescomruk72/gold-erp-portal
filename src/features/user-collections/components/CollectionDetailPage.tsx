@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Layers, Loader2, Pencil, Plus } from 'lucide-react';
+import { ArrowLeft, Eye, Layers, Loader2, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { useGetCategoryNavigation } from '@/features/catalog-navigation';
@@ -33,18 +33,18 @@ function useDebouncedValue<T>(value: T, delayMs = 400): T {
 
 function CollectionEmptyState({ onAddProduct }: { onAddProduct: () => void }) {
     return (
-        <div className="mt-8 flex flex-col items-center justify-center rounded-xl border border-dashed px-6 py-16 text-center">
-            <div className="mb-4 flex size-16 items-center justify-center rounded-full bg-[#0769e9]/10">
-                <Layers className={cn('size-8', portalPrimaryTextClass)} />
+        <div className="mx-auto mt-6 w-full max-w-md rounded-2xl border border-neutral-200 bg-white px-6 py-12 text-center shadow-sm">
+            <div className="mx-auto mb-5 flex size-20 items-center justify-center rounded-full bg-[#0769e9]/10">
+                <Layers className={cn('size-10', portalPrimaryTextClass)} aria-hidden />
             </div>
-            <h3 className={cn('text-lg font-semibold', portalPrimaryTextClass)}>
+            <h3 className={cn('text-lg font-bold', portalPrimaryTextClass)}>
                 Koleksiyonda Ürün Bulunmuyor
             </h3>
-            <p className="mt-2 max-w-sm text-sm text-muted-foreground">
+            <p className="mx-auto mt-2 max-w-xs text-sm leading-relaxed text-neutral-600">
                 Yeni ürün ekleyerek koleksiyonunu tamamlayabilirsin.
             </p>
             <Button
-                className={cn('mt-6 rounded-full px-8', portalPrimaryButtonClass)}
+                className={cn('mt-8 h-11 rounded-lg px-10 font-semibold', portalPrimaryButtonClass)}
                 onClick={onAddProduct}
             >
                 Ürün Ekle
@@ -190,8 +190,45 @@ export function CollectionDetailPage() {
     }
 
     return (
-        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
-            <div className="flex flex-col gap-4 border-b pb-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="mx-auto max-w-7xl px-0 pb-6 sm:px-6 sm:py-8 lg:px-4">
+            {/* Mobil header — Trendyol tarzı */}
+            <div className="border-b border-border px-4 py-3 lg:hidden">
+                <div className="flex items-start gap-2">
+                    <Button
+                        asChild
+                        variant="ghost"
+                        size="icon"
+                        className="size-10 shrink-0 rounded-md"
+                    >
+                        <Link href="/collections">
+                            <ArrowLeft className="size-5" />
+                        </Link>
+                    </Button>
+
+                    <div className="min-w-0 flex-1 pt-0.5">
+                        <h1 className="truncate text-base font-bold">{collection?.ad ?? '…'}</h1>
+                        <p className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
+                            <span>{collection?.itemCount ?? 0} Ürün</span>
+                            <span aria-hidden>|</span>
+                            <span className="inline-flex items-center gap-1">
+                                <Eye className="size-3.5" aria-hidden />
+                                {collection?.itemCount ?? 0}
+                            </span>
+                        </p>
+                    </div>
+
+                    <Button
+                        size="sm"
+                        className={cn('h-9 shrink-0 rounded-lg px-4 text-sm font-semibold', portalPrimaryButtonClass)}
+                        onClick={() => setAddOpen(true)}
+                    >
+                        Ürün Ekle
+                    </Button>
+                </div>
+            </div>
+
+            {/* Masaüstü header */}
+            <div className="hidden flex-col gap-4 border-b pb-4 lg:flex lg:flex-row lg:items-center lg:justify-between">
                 <div className="flex min-w-0 items-start gap-3">
                     <Button
                         asChild
@@ -204,20 +241,7 @@ export function CollectionDetailPage() {
                         </Link>
                     </Button>
                     <div className="min-w-0">
-                        <div className="flex items-center gap-1">
-                            <h1 className="truncate text-xl font-bold">{collection?.ad ?? '…'}</h1>
-                            {collection ? (
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon"
-                                    className="size-8 shrink-0"
-                                    onClick={() => setEditOpen(true)}
-                                >
-                                    <Pencil className="size-4" />
-                                </Button>
-                            ) : null}
-                        </div>
+                        <h1 className="truncate text-xl font-bold">{collection?.ad ?? '…'}</h1>
                         <p className="text-sm text-muted-foreground">
                             {collection?.itemCount ?? 0} Ürün
                         </p>
@@ -236,8 +260,36 @@ export function CollectionDetailPage() {
                 </div>
             </div>
 
+            {/* Mobil arama + filtreler */}
+            {!showEmptyCollection && (
+                <div className="space-y-3 px-4 pt-3 lg:hidden">
+                    <CollectionSearchInput
+                        value={searchInput}
+                        onChange={setSearchInput}
+                        placeholder="Koleksiyonda Ara"
+                    />
+                    {(kategoriOptions.length > 0 || markaOptions.length > 0) && (
+                        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+                            <CollectionCategoryFilter
+                                value={queryParams.kategoriId}
+                                options={kategoriOptions}
+                                onChange={(kategoriId) =>
+                                    void setQueryParams({ kategoriId, page: 1 })
+                                }
+                            />
+                            <CollectionMarkaFilter
+                                value={queryParams.markaId}
+                                options={markaOptions}
+                                onChange={(markaId) => void setQueryParams({ markaId, page: 1 })}
+                            />
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* Masaüstü filtreler */}
             {!showEmptyCollection ? (
-                <div className="mt-4 flex flex-wrap gap-2">
+                <div className="mt-4 hidden flex-wrap gap-2 lg:flex">
                     <CollectionCategoryFilter
                         value={queryParams.kategoriId}
                         options={kategoriOptions}
@@ -269,7 +321,7 @@ export function CollectionDetailPage() {
                     Bu filtrelere uygun ürün bulunamadı.
                 </div>
             ) : (
-                <div className="mt-4 grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-5 lg:grid-cols-4">
+                <div className="mt-4 grid grid-cols-2 gap-3 px-4 md:grid-cols-3 md:gap-5 lg:grid-cols-4 lg:px-0">
                     {(collection?.items ?? [])
                         .filter((item) => item.product)
                         .map((item) => (
@@ -333,15 +385,14 @@ export function CollectionDetailPage() {
                 isSubmitting={isMutating}
             />
 
-            {collection ? (
-                <EditCollectionDialog
-                    open={editOpen}
-                    onOpenChange={setEditOpen}
-                    initialName={collection.ad}
-                    onSubmit={handleRename}
-                    isSubmitting={isMutating}
-                />
-            ) : null}
+            <EditCollectionDialog
+                open={editOpen}
+                onOpenChange={setEditOpen}
+                initialName={collection?.ad ?? ''}
+                onSubmit={handleRename}
+                isSubmitting={isMutating}
+                showSuggestions={false}
+            />
         </div>
     );
 }

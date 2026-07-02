@@ -1,4 +1,3 @@
-import * as React from "react";
 import { LifeBuoy } from "lucide-react";
 import {
     SidebarGroup,
