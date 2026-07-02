@@ -20,11 +20,13 @@ const PREVIEW_LINK_LIMIT = 8;
 type StorefrontCategoryMegaMenuProps = {
     parents: CategoryNavParent[];
     isLoading?: boolean;
+    variant?: 'default' | 'icon';
 };
 
 export function StorefrontCategoryMegaMenu({
     parents,
     isLoading,
+    variant = 'default',
 }: StorefrontCategoryMegaMenuProps) {
     const [open, setOpen] = React.useState(false);
     const [activeParentId, setActiveParentId] = React.useState<number | null>(null);
@@ -41,14 +43,18 @@ export function StorefrontCategoryMegaMenu({
     return (
         <Popover open={open} onOpenChange={setOpen} modal={false}>
             <PopoverTrigger
+                aria-label={variant === 'icon' ? 'Kategoriler' : undefined}
                 className={cn(
-                    'inline-flex h-9 items-center gap-1.5 rounded-none border-0 bg-transparent px-3 text-sm font-semibold shadow-none',
+                    'border-0 bg-transparent shadow-none',
                     'hover:bg-accent data-[state=open]:bg-[#0769e9]/5 data-[state=open]:text-[#0769e9]',
-                    'focus-visible:ring-ring/50 outline-none focus-visible:ring-[3px] rounded-md'
+                    'focus-visible:ring-ring/50 outline-none focus-visible:ring-[3px] rounded-md',
+                    variant === 'icon'
+                        ? 'inline-flex size-10 shrink-0 items-center justify-center p-0'
+                        : 'inline-flex h-9 items-center gap-1.5 rounded-none px-3 text-sm font-semibold'
                 )}
             >
-                <Menu className="size-4" aria-hidden />
-                Kategoriler
+                <Menu className={variant === 'icon' ? 'size-5' : 'size-4'} aria-hidden />
+                {variant !== 'icon' && 'Kategoriler'}
             </PopoverTrigger>
 
             <PopoverContent

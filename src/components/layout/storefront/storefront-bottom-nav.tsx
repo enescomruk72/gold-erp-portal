@@ -17,7 +17,7 @@ export function StorefrontBottomNav() {
                 variant="header"
                 className="flex items-stretch gap-1"
             >
-                <div className="relative z-60 shrink-0">
+                <div className="relative z-60 hidden shrink-0 lg:block">
                     <StorefrontCategoryMegaMenu
                         parents={parents}
                         isLoading={isLoading}

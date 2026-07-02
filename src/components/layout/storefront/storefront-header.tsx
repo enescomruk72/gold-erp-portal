@@ -4,6 +4,7 @@ import * as React from 'react';
 import type { User } from 'next-auth';
 import { usePathname } from 'next/navigation';
 import { AuthTopBar } from '@/components/layout/auth/auth-top-bar';
+import { isFavoritesOrCollectionsPath } from '@/constants/storefront/header-routes';
 import { STOREFRONT_HEADER_CONTAINER_CLASS } from '@/constants/storefront/layout';
 import { StorefrontMainNav } from './storefront-main-nav';
 import { StorefrontBottomNav } from './storefront-bottom-nav';
@@ -18,8 +19,11 @@ type StorefrontHeaderProps = {
 export function StorefrontHeader({ user }: StorefrontHeaderProps) {
     const pathname = usePathname();
     const isProductsPage = pathname.startsWith('/products');
+    const hideCatalogNavMobile = isFavoritesOrCollectionsPath(pathname);
     const pinEnabled = !isProductsPage;
-    const bottomNavVisible = useBottomNavScroll(!isProductsPage);
+    const bottomNavVisible = useBottomNavScroll(
+        !isProductsPage && !hideCatalogNavMobile,
+    );
     const { topBarRef, navShellRef, sentinelRef, isPinned, navHeight } =
         useStorefrontHeaderPin(pinEnabled);
     const showPinnedNav = pinEnabled && isPinned;
@@ -40,7 +44,7 @@ export function StorefrontHeader({ user }: StorefrontHeaderProps) {
 
     return (
         <header className="w-full">
-            <div ref={topBarRef}>
+            <div ref={topBarRef} className="hidden lg:block">
                 <AuthTopBar containerClassName={STOREFRONT_HEADER_CONTAINER_CLASS} />
             </div>
 
@@ -58,9 +62,13 @@ export function StorefrontHeader({ user }: StorefrontHeaderProps) {
                     showPinnedNav && 'fixed top-0 left-0 right-0'
                 )}
             >
-                <StorefrontMainNav user={user} />
+                <StorefrontMainNav user={user} hideSearch={hideCatalogNavMobile} />
 
-                {isProductsPage ? (
+                {hideCatalogNavMobile ? (
+                    <div className="hidden lg:block">
+                        <StorefrontBottomNav />
+                    </div>
+                ) : isProductsPage ? (
                     <StorefrontBottomNav />
                 ) : (
                     <div

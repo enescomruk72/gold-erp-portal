@@ -15,7 +15,13 @@ import { useCart } from '@/features/cart';
 import { CartSheetPanel } from '@/features/cart/components/CartSheetPanel';
 import { cn } from '@/lib/utils';
 
-export function StorefrontCartNav({ className }: { className?: string }) {
+export function StorefrontCartNav({
+    className,
+    variant = 'default',
+}: {
+    className?: string;
+    variant?: 'default' | 'icon';
+}) {
     const { items, hasCartAccess } = useCart();
     const totalQuantity = items.reduce((sum, item) => sum + item.miktar, 0);
     const isEmpty = items.length === 0;
@@ -27,9 +33,13 @@ export function StorefrontCartNav({ className }: { className?: string }) {
             <SheetTrigger asChild>
                 <Button
                     variant="ghost"
-                    size="lg"
+                    size={variant === 'icon' ? 'icon' : 'lg'}
+                    aria-label={variant === 'icon' ? 'Sepetim' : undefined}
                     className={cn(
-                        'inline-flex shrink-0 flex-col items-center gap-0.5 rounded-md px-2 py-1.5 text-foreground transition-colors hover:text-primary',
+                        'inline-flex shrink-0 text-foreground transition-colors hover:text-primary',
+                        variant === 'icon'
+                            ? 'size-10 rounded-md'
+                            : 'flex-col items-center gap-0.5 rounded-md px-2 py-1.5',
                         className
                     )}
                 >
@@ -41,7 +51,9 @@ export function StorefrontCartNav({ className }: { className?: string }) {
                             </span>
                         )}
                     </span>
-                    <span className="text-[11px] font-medium leading-none">Sepetim</span>
+                    {variant !== 'icon' && (
+                        <span className="text-[11px] font-medium leading-none">Sepetim</span>
+                    )}
                 </Button>
             </SheetTrigger>
             <SheetContent

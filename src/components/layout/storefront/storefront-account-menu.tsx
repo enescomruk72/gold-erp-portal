@@ -30,9 +30,14 @@ import { Button } from '@/components/ui/button';
 type StorefrontAccountMenuProps = {
     user?: AuthUser | null;
     className?: string;
+    variant?: 'default' | 'icon';
 };
 
-export function StorefrontAccountMenu({ user, className }: StorefrontAccountMenuProps) {
+export function StorefrontAccountMenu({
+    user,
+    className,
+    variant = 'default',
+}: StorefrontAccountMenuProps) {
     const displayName =
         user && (user as AuthUser & { firstName?: string; lastName?: string })
             ? `${(user as AuthUser & { firstName?: string }).firstName || ''} ${(user as AuthUser & { lastName?: string }).lastName || ''}`.trim() ||
@@ -45,17 +50,23 @@ export function StorefrontAccountMenu({ user, className }: StorefrontAccountMenu
             <DropdownMenuTrigger asChild>
                 <Button
                     variant="ghost"
-                    size="lg"
+                    size={variant === 'icon' ? 'icon' : 'lg'}
+                    aria-label={variant === 'icon' ? 'Hesabım' : undefined}
                     className={cn(
-                        'inline-flex shrink-0 flex-col items-center gap-0.5 rounded-md px-2 py-1.5 text-foreground transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                        'inline-flex shrink-0 text-foreground transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                        variant === 'icon'
+                            ? 'size-10 rounded-md'
+                            : 'flex-col items-center gap-0.5 rounded-md px-2 py-1.5',
                         className
                     )}
                 >
                     <User className="size-5" aria-hidden />
-                    <span className="inline-flex items-center gap-0.5 text-[11px] font-medium leading-none">
-                        Hesabım
-                        <ChevronDown className="size-3 opacity-60" aria-hidden />
-                    </span>
+                    {variant !== 'icon' && (
+                        <span className="inline-flex items-center gap-0.5 text-[11px] font-medium leading-none">
+                            Hesabım
+                            <ChevronDown className="size-3 opacity-60" aria-hidden />
+                        </span>
+                    )}
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="min-w-56">

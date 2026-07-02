@@ -11,6 +11,7 @@ type StorefrontNavActionProps = {
     badge?: number;
     onClick?: () => void;
     className?: string;
+    variant?: 'default' | 'icon';
 };
 
 export function StorefrontNavAction({
@@ -20,33 +21,47 @@ export function StorefrontNavAction({
     badge,
     onClick,
     className,
+    variant = 'default',
 }: StorefrontNavActionProps) {
-    const content = (
-        <>
+    const badgeEl =
+        badge != null && badge > 0 ? (
+            <span className="absolute -right-2.5 -top-1.5 flex size-4 items-center justify-center rounded-full bg-primary px-0.5 text-[10px] font-semibold text-primary-foreground">
+                {badge > 99 ? '99+' : badge}
+            </span>
+        ) : null;
+
+    const content =
+        variant === 'icon' ? (
+            <span className="relative inline-flex">
+                {icon}
+                {badgeEl}
+            </span>
+        ) : (
             <span className="relative flex flex-col items-center gap-0.5">
                 <span className="relative inline-flex">
                     {icon}
-                    {badge != null && badge > 0 && (
-                        <span className="absolute -right-2.5 -top-1.5 flex size-4 items-center justify-center rounded-full bg-primary px-0.5 text-[10px] font-semibold text-primary-foreground">
-                            {badge > 99 ? '99+' : badge}
-                        </span>
-                    )}
+                    {badgeEl}
                 </span>
                 <span className="text-[11px] font-medium leading-none">{label}</span>
             </span>
-        </>
-    );
+        );
 
     const baseClass = cn(
-        'inline-flex shrink-0 items-center rounded-md px-2 py-1.5 text-foreground transition-colors hover:text-primary',
+        'inline-flex shrink-0 items-center rounded-md text-foreground transition-colors hover:text-primary',
+        variant === 'icon' ? 'size-10 justify-center p-0' : 'px-2 py-1.5',
         className
     );
 
     if (href) {
         return (
-
-            <Button variant="ghost" size="lg" onClick={onClick} className={baseClass} asChild>
-                <Link href={href} className={baseClass}>
+            <Button
+                variant="ghost"
+                size={variant === 'icon' ? 'icon' : 'lg'}
+                onClick={onClick}
+                className={baseClass}
+                asChild
+            >
+                <Link href={href} aria-label={variant === 'icon' ? label : undefined}>
                     {content}
                 </Link>
             </Button>
@@ -54,7 +69,13 @@ export function StorefrontNavAction({
     }
 
     return (
-        <Button variant="ghost" size="lg" asChild onClick={onClick} className={baseClass}>
+        <Button
+            variant="ghost"
+            size={variant === 'icon' ? 'icon' : 'lg'}
+            onClick={onClick}
+            className={baseClass}
+            aria-label={variant === 'icon' ? label : undefined}
+        >
             {content}
         </Button>
     );
