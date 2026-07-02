@@ -8,10 +8,12 @@ export function useUserCollections(enabled = true) {
     const query = useGetUserCollections(undefined, enabled);
     const mutations = useUserCollectionMutations();
 
-    const collections = useMemo(
-        () => query.data?.data?.items ?? [],
-        [query.data?.data?.items],
-    );
+    const collections = useMemo(() => {
+        const items = query.data?.data?.items ?? [];
+        return [...items].sort(
+            (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+        );
+    }, [query.data?.data?.items]);
 
     const accessDenied =
         query.error?.statusCode === 403 || query.error?.statusCode === 401;

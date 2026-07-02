@@ -3,11 +3,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Bookmark, Heart, Loader2, Plus } from 'lucide-react';
+import { Bookmark, Loader2, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { portalPrimaryButtonClass, portalPrimaryTextClass } from '@/constants/storefront/brand';
+import { portalPrimaryButtonClass } from '@/constants/storefront/brand';
+import { FavoritesCollectionsTabNav } from '@/features/favorites/components/FavoritesCollectionsTabNav';
 import { useUserCollections } from '@/features/user-collections/hooks/use-user-collections';
 import { useCollectionListSearchParams } from '@/features/user-collections/lib/collection-list-search-params';
 import { collectionPublicHref } from '@/features/user-collections/lib/collection-href';
@@ -32,6 +33,7 @@ export function CollectionsListPage() {
     const debouncedSearch = useDebouncedValue(searchInput);
 
     const [createOpen, setCreateOpen] = useState(false);
+    const [editOpen, setEditOpen] = useState(false);
     const [editTarget, setEditTarget] = useState<{ id: string; ad: string } | null>(null);
 
     const {
@@ -71,34 +73,21 @@ export function CollectionsListPage() {
     }
 
     return (
-        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
-            <div className="flex flex-col gap-4 border-b pb-4 lg:flex-row lg:items-end lg:justify-between">
-                <div className="flex gap-6">
-                    <Link
-                        href="/favorites"
-                        className="inline-flex items-center gap-2 border-b-2 border-transparent pb-2 text-sm font-semibold text-neutral-500 hover:text-neutral-800"
-                    >
-                        <Heart className="size-4" />
-                        Favorilerim
-                    </Link>
-                    <span
-                        className={cn(
-                            'inline-flex items-center gap-2 border-b-2 border-[#0769e9] pb-2 text-sm font-semibold',
-                            portalPrimaryTextClass,
-                        )}
-                    >
-                        <Bookmark className="size-4" />
-                        Koleksiyonlarım ({collections.length})
-                    </span>
-                </div>
-                <CollectionSearchInput
-                    value={searchInput}
-                    onChange={setSearchInput}
-                    placeholder="Koleksiyonlarımda Ara"
-                />
-            </div>
+        <div className="relative mx-auto max-w-7xl px-0 pb-24 sm:px-6 sm:py-8 lg:px-4 lg:pb-8">
+            <FavoritesCollectionsTabNav
+                activeTab="collections"
+                collectionsCount={collections.length}
+                desktopTrailing={
+                    <CollectionSearchInput
+                        value={searchInput}
+                        onChange={setSearchInput}
+                        placeholder="Koleksiyonlarımda Ara"
+                        className="max-w-sm"
+                    />
+                }
+            />
 
-            <div className="mt-4 flex justify-end">
+            <div className="hidden justify-end pt-4 lg:flex">
                 <Button
                     size="sm"
                     className={cn('rounded-full', portalPrimaryButtonClass)}
@@ -109,27 +98,47 @@ export function CollectionsListPage() {
                 </Button>
             </div>
 
+            <div className="space-y-3 px-4 pt-3 lg:hidden">
+                <CollectionSearchInput
+                    value={searchInput}
+                    onChange={setSearchInput}
+                    placeholder="Koleksiyonlarımda Ara"
+                />
+            </div>
+
             {isLoading ? (
                 <div className="mt-12 flex justify-center">
                     <Loader2 className="size-8 animate-spin text-muted-foreground" />
                 </div>
             ) : filtered.length === 0 ? (
-                <div className="mt-12 flex flex-col items-center gap-4 rounded-xl border border-dashed py-16">
+                <div className="mt-12 flex flex-col items-center gap-4 px-4 py-16">
                     <Bookmark className="size-10 text-muted-foreground" />
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-center text-sm text-muted-foreground">
                         {params.search.trim()
                             ? 'Aramanıza uygun koleksiyon bulunamadı.'
                             : 'Henüz koleksiyon oluşturmadınız.'}
                     </p>
+                    {!params.search.trim() && (
+                        <Button
+                            className={cn('rounded-full', portalPrimaryButtonClass)}
+                            onClick={() => setCreateOpen(true)}
+                        >
+                            <Plus className="mr-1 size-4" />
+                            Koleksiyon Oluştur
+                        </Button>
+                    )}
                 </div>
             ) : (
-                <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="mt-4 space-y-4 px-4 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0 xl:grid-cols-3 lg:px-0">
                     {filtered.map((collection) => (
                         <CollectionCard
                             key={collection.id}
                             collection={collection}
                             isDeleting={isMutating}
-                            onEdit={() => setEditTarget({ id: collection.id, ad: collection.ad })}
+                            onEdit={() => {
+                                setEditTarget({ id: collection.id, ad: collection.ad });
+                                setEditOpen(true);
+                            }}
                             onAddProduct={() => {
                                 router.push(`${collectionPublicHref(collection.ad, collection.id)}?add=1`);
                             }}
@@ -146,6 +155,18 @@ export function CollectionsListPage() {
                 </div>
             )}
 
+            {/* Mobil FAB */}
+            <div className="fixed inset-x-0 bottom-4 z-40 flex justify-center px-4 lg:hidden">
+                <Button
+                    size="lg"
+                    className={cn('h-12 w-full max-w-md rounded-full shadow-lg', portalPrimaryButtonClass)}
+                    onClick={() => setCreateOpen(true)}
+                >
+                    <Plus className="mr-1 size-5" />
+                    Koleksiyon Oluştur
+                </Button>
+            </div>
+
             <CreateCollectionDialog
                 open={createOpen}
                 onOpenChange={setCreateOpen}
@@ -161,25 +182,22 @@ export function CollectionsListPage() {
                 }}
             />
 
-            {editTarget ? (
-                <EditCollectionDialog
-                    open
-                    onOpenChange={(open) => {
-                        if (!open) setEditTarget(null);
-                    }}
-                    initialName={editTarget.ad}
-                    isSubmitting={isMutating}
-                    onSubmit={async (ad) => {
-                        try {
-                            await updateCollection(editTarget.id, ad);
-                            toast.success('Koleksiyon adı güncellendi');
-                            setEditTarget(null);
-                        } catch {
-                            toast.error('Koleksiyon adı güncellenemedi');
-                        }
-                    }}
-                />
-            ) : null}
+            <EditCollectionDialog
+                open={editOpen}
+                onOpenChange={setEditOpen}
+                initialName={editTarget?.ad ?? ''}
+                isSubmitting={isMutating}
+                onSubmit={async (ad) => {
+                    if (!editTarget) return;
+                    try {
+                        await updateCollection(editTarget.id, ad);
+                        toast.success('Koleksiyon adı güncellendi');
+                        setEditOpen(false);
+                    } catch {
+                        toast.error('Koleksiyon adı güncellenemedi');
+                    }
+                }}
+            />
         </div>
     );
 }

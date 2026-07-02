@@ -8,6 +8,7 @@ type EditCollectionDialogProps = {
     initialName: string;
     onSubmit: (name: string) => Promise<void>;
     isSubmitting?: boolean;
+    showSuggestions?: boolean;
 };
 
 export function EditCollectionDialog({
@@ -16,6 +17,7 @@ export function EditCollectionDialog({
     initialName,
     onSubmit,
     isSubmitting,
+    showSuggestions = false,
 }: EditCollectionDialogProps) {
     return (
         <CollectionNameDialog
@@ -25,6 +27,7 @@ export function EditCollectionDialog({
             initialName={initialName}
             onSubmit={onSubmit}
             isSubmitting={isSubmitting}
+            showSuggestions={showSuggestions}
         />
     );
 }
