@@ -1,7 +1,9 @@
 import Link from 'next/link';
 import { Facebook, Instagram, Youtube } from 'lucide-react';
+import { AppStoreBadges } from '@/components/layout/storefront/app-store-badges';
 import { cn } from '@/lib/utils';
 import { STOREFRONT_CONTENT_CONTAINER_CLASS } from '@/constants/storefront/layout';
+import { AuthFooterMobile } from './auth-footer-mobile';
 
 type FooterLink = { label: string; href: string };
 
@@ -79,7 +81,10 @@ export function AuthFooter({
     containerClassName = STOREFRONT_CONTENT_CONTAINER_CLASS,
 }: AuthFooterProps) {
     return (
-        <footer className={cn('mt-auto bg-card', className)}>
+        <>
+            <AuthFooterMobile containerClassName={containerClassName} />
+
+            <footer className={cn('mt-auto hidden bg-card lg:block', className)}>
             <div className="border-t border-border">
                 <div
                     className={cn(
@@ -124,16 +129,7 @@ export function AuthFooter({
                                 </a>
                             ))}
                         </div>
-                        <div className="flex flex-wrap gap-2">
-                            {['App Store', 'Google Play', 'AppGallery'].map((store) => (
-                                <span
-                                    key={store}
-                                    className="inline-flex h-10 items-center rounded-md border border-primary-foreground/20 px-3 text-[11px] font-medium"
-                                >
-                                    {store}
-                                </span>
-                            ))}
-                        </div>
+                        <AppStoreBadges size="sm" />
                     </div>
 
                     <div className="flex flex-col gap-3 border-t border-primary-foreground/10 pt-4 text-[11px] text-primary-foreground/70 sm:flex-row sm:items-center sm:justify-between">
@@ -153,5 +149,6 @@ export function AuthFooter({
                 </div>
             </div>
         </footer>
+        </>
     );
 }

@@ -21,7 +21,7 @@ export function AuthTopBar({
         <div className={cn('bg-card', className)}>
             <div
                 className={cn(
-                    'flex h-9 items-center justify-end gap-5 text-xs text-muted-foreground',
+                    'flex h-6 items-center justify-end gap-5 text-xs text-muted-foreground',
                     containerClassName
                 )}
             >
